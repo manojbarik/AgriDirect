@@ -20,13 +20,16 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     host: str = "127.0.0.1"
     port: int = 8000
+
     database_url: str = (
         "postgresql+psycopg://marketplace:marketplace@localhost:5432/farmer_buyer_marketplace"
     )
+
     jwt_secret_key: str = ""
     jwt_algorithm: str = "HS256"
     jwt_access_token_minutes: int = 15
     jwt_refresh_token_days: int = 30
+
     backend_cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: [
             "http://localhost:5173",
@@ -39,44 +42,63 @@ class Settings(BaseSettings):
             "http://127.0.0.1:3000",
         ]
     )
+
     # When True, the app trusts X-Forwarded-For from a reverse proxy for
-    # client IP resolution (rate limiting, refresh audit log). Keep False when
-    # the app is reachable directly, otherwise clients can spoof the header.
+    # client IP resolution (rate limiting, refresh audit log).
     trust_proxy_headers: bool = False
+
     log_level: str = "INFO"
+
     otp_provider_mode: str = "mock"
-    # Gmail API (OAuth2) settings for email delivery. To obtain a refresh
-    # token, run `python -m scripts.gmail_oauth_setup` once and store the
-    # value in GMAIL_REFRESH_TOKEN.
+
+    # Gmail API (OAuth2) settings for email delivery.
     gmail_client_id: str = Field(
         default="",
-        validation_alias=AliasChoices("GMAIL_CLIENT_ID", "GOOGLE_GMAIL_CLIENT_ID"),
+        validation_alias=AliasChoices(
+            "GMAIL_CLIENT_ID",
+            "GOOGLE_GMAIL_CLIENT_ID",
+        ),
     )
+
     gmail_client_secret: str = Field(
         default="",
-        validation_alias=AliasChoices("GMAIL_CLIENT_SECRET", "GOOGLE_GMAIL_CLIENT_SECRET"),
+        validation_alias=AliasChoices(
+            "GMAIL_CLIENT_SECRET",
+            "GOOGLE_GMAIL_CLIENT_SECRET",
+        ),
     )
+
     gmail_refresh_token: str = Field(
         default="",
-        validation_alias=AliasChoices("GMAIL_REFRESH_TOKEN", "GOOGLE_GMAIL_REFRESH_TOKEN"),
+        validation_alias=AliasChoices(
+            "GMAIL_REFRESH_TOKEN",
+            "GOOGLE_GMAIL_REFRESH_TOKEN",
+        ),
     )
+
     gmail_sender_email: str = Field(
         default="",
-        validation_alias=AliasChoices("GMAIL_SENDER_EMAIL", "GMAIL_USER"),
+        validation_alias=AliasChoices(
+            "GMAIL_SENDER_EMAIL",
+            "GMAIL_USER",
+        ),
     )
-    # SMTP (App Password) settings for email delivery. Simplest option for
-    # Gmail: enable 2-Step Verification, create an app password at
-    # https://myaccount.google.com/apppasswords, and store it here.
+
+    # SMTP settings for email delivery.
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587
     smtp_user: str = ""
     smtp_app_password: str = ""
     smtp_sender_email: str = ""
+
     otp_ttl_minutes: int = 3
     otp_resend_cooldown_seconds: int = 30
     otp_resend_max_per_hour: int = 3
+
     password_reset_token_ttl_minutes: int = 30
+
     kyc_provider_mode: str = "mock"
+
     payment_provider_mode: str = "mock"
     payment_mock_mode: str = "success"
     payment_advance_percent: float = 20.0
@@ -84,13 +106,13 @@ class Settings(BaseSettings):
     payment_provider_key_id: str = ""
     payment_provider_key_secret: str = ""
     payment_webhook_secret: str = ""
+
     quality_confirmation_days: int = 2
+
     notification_provider_mode: str = "mock"
     delivery_provider_mode: str = "mock"
 
-    # Transparent trust score engine configuration (Phase 15).
-    # The score is a weighted sum of five explainable components. Weights
-    # should add up to 100 so a perfectly rated user scores exactly 100/100.
+    # Transparent trust score engine configuration.
     trust_calculation_version: str = "v1"
     trust_verification_weight: float = 20.0
     trust_transaction_weight: float = 25.0
@@ -105,21 +127,70 @@ class Settings(BaseSettings):
     @classmethod
     def parse_cors_origins(cls, value: object) -> object:
         if isinstance(value, str):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
+            return [
+                origin.strip()
+                for origin in value.split(",")
+                if origin.strip()
+            ]
         return value
 
     @field_validator("database_url", mode="after")
     @classmethod
-    def resolve_sqlite_path(cls, value: str) -> str:
-        if (
-            value.startswith("sqlite:///")
-            and not value.startswith("sqlite:////")
-            and value != "sqlite:///:memory:"
-        ):
-            raw_path = value[len("sqlite:///") :]
-            backend_dir = Path(__file__).resolve().parent.parent.parent
-            resolved_file = (backend_dir / raw_path).resolve()
-            return f"sqlite:///{resolved_file}"
+    def resolve_database_url(cls, value: str) -> str:
+        """
+        Normalize database URLs for SQLAlchemy.
+
+        Local development can use SQLite.
+
+        Render can provide:
+            postgresql://...
+
+        This converts it to:
+            postgresql+psycopg://...
+
+        because this project uses Psycopg 3.
+        """
+
+        value = value.strip()
+
+        # -----------------------------------------
+        # SQLite
+        # -----------------------------------------
+        if value.startswith("sqlite:///"):
+            if (
+                not value.startswith("sqlite:////")
+                and value != "sqlite:///:memory:"
+            ):
+                raw_path = value[len("sqlite:///") :]
+
+                backend_dir = (
+                    Path(__file__).resolve().parent.parent.parent
+                )
+
+                resolved_file = (backend_dir / raw_path).resolve()
+
+                return f"sqlite:///{resolved_file}"
+
+            return value
+
+        # -----------------------------------------
+        # Render PostgreSQL
+        # -----------------------------------------
+        if value.startswith("postgresql://"):
+            return (
+                "postgresql+psycopg://"
+                + value[len("postgresql://") :]
+            )
+
+        # -----------------------------------------
+        # Already normalized PostgreSQL URL
+        # -----------------------------------------
+        if value.startswith("postgresql+psycopg://"):
+            return value
+
+        # -----------------------------------------
+        # Unknown/other database URL
+        # -----------------------------------------
         return value
 
 
