@@ -1,0 +1,95 @@
+@import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
+@import './tokens.css';
+@import './globals.css';
+@import './theme.css';
+@import './animations.css';
+@import './background.css';
+
+@custom-variant dark (&:is([data-theme=dark], [data-theme=dark] *));
+
+@theme {
+  /* AgriDirect custom palette — mirrors styles/tokens.css so Tailwind can
+     generate utilities like text-primary-700, bg-primary-50, etc. */
+
+  /* Primary — Forest Green family */
+  --color-primary-50: #f2faf4;
+  --color-primary-100: #e0f5e8;
+  --color-primary-200: #bfe8cf;
+  --color-primary-300: #8ed6ae;
+  --color-primary-400: #59bd87;
+  --color-primary-500: #2ea166;
+  --color-primary-600: #17824d;
+  --color-primary-700: #166534;
+  --color-primary-800: #12502a;
+  --color-primary-900: #0e3f22;
+  --color-primary-950: #082717;
+
+  /* Accent — Emerald family */
+  --color-secondary-50: #ecfdf5;
+  --color-secondary-100: #d1fae5;
+  --color-secondary-200: #a7f3d0;
+  --color-secondary-300: #6ee7b7;
+  --color-secondary-400: #34d399;
+  --color-secondary-500: #10b981;
+  --color-secondary-600: #059669;
+  --color-secondary-700: #047857;
+  --color-secondary-800: #065f46;
+  --color-secondary-900: #064e3b;
+
+  /* Warm earth scale (legacy warm accents / badges) */
+  --color-earth-50: #fdf8f3;
+  --color-earth-100: #faefdf;
+  --color-earth-200: #f5dcc0;
+  --color-earth-300: #ebc58f;
+  --color-earth-400: #e0a45d;
+  --color-earth-500: #d4873a;
+  --color-earth-600: #c16d2c;
+  --color-earth-700: #9d5425;
+  --color-earth-800: #7f4422;
+  --color-earth-900: #67391f;
+
+  /* Neutral — clean gray-green */
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #f7faf7;
+  --color-neutral-100: #eef3ee;
+  --color-neutral-200: #e0e8e0;
+  --color-neutral-300: #c7d2c7;
+  --color-neutral-400: #a3b0a3;
+  --color-neutral-500: #6b7280;
+  --color-neutral-600: #4b5563;
+  --color-neutral-700: #374151;
+  --color-neutral-800: #1f2937;
+  --color-neutral-900: #17201a;
+  --color-neutral-950: #0e1610;
+
+  /* Semantic aliases used by dashboards/layouts */
+  --color-surface: #ffffff;
+  --color-surface-elevated: #f7faf7;
+  --color-main: #f7faf7;
+  --color-muted: #6b7280;
+  --color-bright: #17201a;
+  --color-prominent: #c7d2c7;
+  --color-subtle: #e0e8e0;
+  --color-primary-emerald: #17824d;
+
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Shadow system (soft, professional) */
+  --shadow-xs: 0 1px 2px 0 rgb(23 26 20 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(23 26 20 / 0.06), 0 1px 2px -1px rgb(23 26 20 / 0.05);
+  --shadow-md: 0 4px 8px -1px rgb(23 26 20 / 0.07), 0 2px 4px -2px rgb(23 26 20 / 0.05);
+  --shadow-lg: 0 10px 18px -3px rgb(23 26 20 / 0.08), 0 4px 6px -4px rgb(23 26 20 / 0.05);
+  --shadow-xl: 0 20px 28px -5px rgb(23 26 20 / 0.09), 0 8px 10px -6px rgb(23 26 20 / 0.06);
+  --shadow-2xl: 0 25px 50px -12px rgb(23 26 20 / 0.14);
+  --shadow-2xs: 0 1px 1px 0 rgb(23 26 20 / 0.04);
+
+  /* Radius system */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+}

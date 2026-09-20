@@ -1,0 +1,52 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!.docker.env.example
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Local data and generated artifacts
+database/data/
+ml/artifacts/*
+!ml/artifacts/.gitkeep
+ml/data/raw/*
+!ml/data/raw/.gitkeep
+ml/data/processed/*
+!ml/data/processed/.gitkeep
+
+# IDE and operating-system files
+.DS_Store
+.idea/
+.vscode/
+
+# Gmail OAuth artifacts (contain refresh tokens / client secrets)
+token.json
+client_secret.json
+credentials.json
+
+
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment secrets
+.env
+.env.local
+.env.*.local

@@ -1,0 +1,1 @@
+"""In-app dispatch for the notification system."""

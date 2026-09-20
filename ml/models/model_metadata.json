@@ -1,0 +1,107 @@
+{
+  "model_version": "v1.1.0-evaluated",
+  "is_synthetic": true,
+  "best_model_name": "LightGBM",
+  "residual_std": 1.5647,
+  "validation_metrics": {
+    "mae": 2.2199,
+    "rmse": 3.18,
+    "r2": 0.9851
+  },
+  "test_metrics": {
+    "mae": 2.1685,
+    "rmse": 3.1457,
+    "r2": 0.9844
+  },
+  "all_models_comparison": {
+    "Mean Baseline (reference)": {
+      "val": {
+        "mae": 20.417,
+        "rmse": 26.0362,
+        "r2": -0.0003
+      },
+      "test": {
+        "mae": 20.159,
+        "rmse": 25.1735,
+        "r2": -0.0003
+      }
+    },
+    "Linear Regression": {
+      "val": {
+        "mae": 5.411,
+        "rmse": 7.4301,
+        "r2": 0.9185
+      },
+      "test": {
+        "mae": 5.8306,
+        "rmse": 7.8482,
+        "r2": 0.9028
+      }
+    },
+    "Random Forest": {
+      "val": {
+        "mae": 3.1505,
+        "rmse": 4.3875,
+        "r2": 0.9716
+      },
+      "test": {
+        "mae": 3.3656,
+        "rmse": 4.6382,
+        "r2": 0.966
+      }
+    },
+    "LightGBM": {
+      "val": {
+        "mae": 2.2199,
+        "rmse": 3.18,
+        "r2": 0.9851
+      },
+      "test": {
+        "mae": 2.1685,
+        "rmse": 3.1457,
+        "r2": 0.9844
+      }
+    },
+    "XGBoost": {
+      "val": {
+        "mae": 2.4537,
+        "rmse": 3.4856,
+        "r2": 0.9821
+      },
+      "test": {
+        "mae": 2.6329,
+        "rmse": 3.7914,
+        "r2": 0.9773
+      }
+    }
+  },
+  "feature_importances": {
+    "historical_avg_price": 875.0,
+    "demand_index": 696.0,
+    "month": 475.0,
+    "quantity_kg": 388.0,
+    "grade_Grade A": 155.0,
+    "grade_Grade C": 104.0,
+    "state_Maharashtra": 29.0,
+    "grade_Grade B": 29.0,
+    "crop_name_Mango": 19.0,
+    "category_Oilseed": 18.0,
+    "variety_Basmati": 17.0,
+    "district_Nashik": 15.0,
+    "season_Year-Round": 15.0,
+    "season_Zaid": 15.0,
+    "season_Rabi": 14.0
+  },
+  "evaluation": {
+    "phase": 22,
+    "candidates": [
+      "Mean Baseline (reference)",
+      "Linear Regression",
+      "Random Forest",
+      "LightGBM",
+      "XGBoost"
+    ],
+    "selection_rationale": "Final price model: LightGBM. Ranked by validation R\u00b2: LightGBM, XGBoost, Random Forest, Linear Regression, Mean Baseline (reference). Best validation R\u00b2 = 0.9851 (LightGBM); models within 0.005 R\u00b2 are treated as tied and the tie is resolved on the held-out test RMSE, then by model simplicity \u2014 the model was selected on measured validation/test performance, not because it is more advanced."
+  },
+  "data_disclaimer": "DEMO / SYNTHETIC MODEL: Trained on synthetic dataset for development and initial prototype demonstration."
+}

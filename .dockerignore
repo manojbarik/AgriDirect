@@ -1,0 +1,20 @@
+# Repo-root build context — used by backend/Dockerfile.
+# Keep only what the runtime image needs.
+.git
+backend/.venv
+**/__pycache__
+**/*.pyc
+*.db
+*.db-*
+.env
+.env.*
+docker-compose.yml
+docs
+node_modules
+frontend
+database
+ml/reports
+ml/tests
+ml/data
+ml/demand/data
+ml/*/__pycache__

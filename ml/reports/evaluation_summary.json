@@ -1,0 +1,28 @@
+{
+  "phase": 22,
+  "datasets": {
+    "price": "/Users/manojbarik/Desktop/SIH PROJECT 2026/ml/data/synthetic_crop_prices.csv",
+    "demand": "/Users/manojbarik/Desktop/SIH PROJECT 2026/ml/demand/data/synthetic_demand.csv"
+  },
+  "price": {
+    "candidates": [
+      "Mean Baseline (reference)",
+      "Linear Regression",
+      "Random Forest",
+      "LightGBM",
+      "XGBoost"
+    ],
+    "selected": "LightGBM",
+    "selection_rationale": "Final price model: LightGBM. Ranked by validation R\u00b2: LightGBM, XGBoost, Random Forest, Linear Regression, Mean Baseline (reference). Best validation R\u00b2 = 0.9851 (LightGBM); models within 0.005 R\u00b2 are treated as tied and the tie is resolved on the held-out test RMSE, then by model simplicity \u2014 the model was selected on measured validation/test performance, not because it is more advanced."
+  },
+  "demand": {
+    "candidates": [
+      "Historical Average Baseline",
+      "Random Forest",
+      "LightGBM",
+      "XGBoost"
+    ],
+    "selected": "LightGBM",
+    "selection_rationale": "Final demand model: LightGBM. Ranked by validation RMSE: LightGBM, XGBoost, Random Forest, Historical Average Baseline. It beats the historical-average baseline by 75.0% relative RMSE (threshold 2%) and holds up on the held-out test split. Model selected on measured performance, not on algorithmic novelty."
+  }
+}

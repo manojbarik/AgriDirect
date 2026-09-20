@@ -1,0 +1,332 @@
+:root {
+  color-scheme: light;
+
+  /* ===== PRIMARY — Enterprise AgTech Emerald & Teal ===== */
+  --color-primary-50: #f0fdf4;
+  --color-primary-100: #dcfce7;
+  --color-primary-200: #bbf7d0;
+  --color-primary-300: #86efac;
+  --color-primary-400: #4ade80;
+  --color-primary-500: #22c55e;
+  --color-primary-600: #16a34a;
+  --color-primary-700: #15803d;
+  --color-primary-800: #166534;
+  --color-primary-900: #14532d;
+  --color-primary-950: #052e16;
+
+  /* Accent — Emerald / Cyber-Agri ===== */
+  --color-secondary-50: #ecfdf5;
+  --color-secondary-100: #d1fae5;
+  --color-secondary-200: #a7f3d0;
+  --color-secondary-300: #6ee7b7;
+  --color-secondary-400: #34d399;
+  --color-secondary-500: #10b981;
+  --color-secondary-600: #059669;
+  --color-secondary-700: #047857;
+  --color-secondary-800: #065f46;
+  --color-secondary-900: #064e3b;
+  --color-secondary-950: #022c22;
+
+  /* Accent Amber / Gold */
+  --color-earth-50: #fffbeb;
+  --color-earth-100: #fef3c7;
+  --color-earth-200: #fde68a;
+  --color-earth-300: #fcd34d;
+  --color-earth-400: #fbbf24;
+  --color-earth-500: #f59e0b;
+  --color-earth-600: #d97706;
+  --color-earth-700: #b45309;
+  --color-earth-800: #92400e;
+  --color-earth-900: #78350f;
+
+  /* ===== SLATE / NEUTRALS (Production SaaS) ===== */
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+
+  /* ===== SEMANTIC INDICATORS ===== */
+  --color-success: #16a34a;
+  --color-success-light: #f0fdf4;
+  --color-success-border: #86efac;
+
+  --color-warning: #d97706;
+  --color-warning-light: #fffbeb;
+  --color-warning-border: #fde68a;
+
+  --color-error: #dc2626;
+  --color-error-light: #fef2f2;
+  --color-error-border: #fca5a5;
+
+  --color-info: #0284c7;
+  --color-info-light: #f0f9ff;
+  --color-info-border: #7dd3fc;
+
+  /* ===== MODERN SURFACES ===== */
+  --surface-page: #f8fafc;
+  --surface-card: #ffffff;
+  --surface-elevated: #ffffff;
+  --surface-overlay: rgba(255, 255, 255, 0.95);
+  --surface-input: #ffffff;
+  --surface-hover: rgba(5, 150, 105, 0.04);
+  --surface-active: rgba(5, 150, 105, 0.08);
+  --surface-disabled: #f1f5f9;
+
+  /* ===== BORDER SYSTEM ===== */
+  --border-subtle: #e2e8f0;
+  --border-default: #cbd5e1;
+  --border-strong: #94a3b8;
+  --border-focus: #059669;
+  --border-error: #dc2626;
+
+  /* ===== TEXT SYSTEM ===== */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-inverse: #ffffff;
+  --text-link: #059669;
+  --text-link-hover: #047857;
+  --text-disabled: #94a3b8;
+  --text-on-primary: #ffffff;
+
+  /* ===== DASHBOARD ALIASES ===== */
+  --bg-surface: #ffffff;
+  --bg-main: #f8fafc;
+  --bg-surface-elevated: #ffffff;
+  --text-main: #0f172a;
+  --text-bright: #020617;
+  --text-muted: #64748b;
+  --border-prominent: #cbd5e1;
+  --primary-emerald: #059669;
+
+  /* Role accents */
+  --accent-blue: #0284c7;
+  --rust: #d97706;
+  --slate: #475569;
+
+  /* App-bar / bottom-nav chrome */
+  --nav-bg: #ffffff;
+  --nav-border: #e2e8f0;
+  --nav-accent: #059669;
+  --nav-on: #0f172a;
+  --nav-muted: #64748b;
+
+  /* ===== SHADOW SYSTEM ===== */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+
+  /* ===== SPACING SYSTEM ===== */
+  --space-0: 0;
+  --space-px: 1px;
+  --space-0.5: 0.125rem;
+  --space-1: 0.25rem;
+  --space-1.5: 0.375rem;
+  --space-2: 0.5rem;
+  --space-2.5: 0.625rem;
+  --space-3: 0.75rem;
+  --space-3.5: 0.875rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-9: 2.25rem;
+  --space-10: 2.5rem;
+  --space-11: 2.75rem;
+  --space-12: 3rem;
+  --space-14: 3.5rem;
+  --space-16: 4rem;
+  --space-18: 4.5rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+  --space-28: 7rem;
+  --space-32: 8rem;
+  --space-36: 9rem;
+  --space-40: 10rem;
+  --space-44: 11rem;
+  --space-48: 12rem;
+  --space-52: 13rem;
+  --space-56: 14rem;
+  --space-60: 15rem;
+  --space-64: 16rem;
+  --space-72: 18rem;
+  --space-80: 20rem;
+  --space-96: 24rem;
+
+  /* ===== RADIUS SYSTEM ===== */
+  --radius-none: 0;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* ===== TYPOGRAPHY SYSTEM ===== */
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+  --font-size-6xl: 3.75rem;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.2;
+  --line-height-snug: 1.35;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.625;
+
+  /* ===== TRANSITIONS ===== */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== DARK MODE (Twilight / Night) ===== */
+html[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-primary-50: #052e16;
+  --color-primary-100: #14532d;
+  --color-primary-200: #166534;
+  --color-primary-300: #15803d;
+  --color-primary-400: #16a34a;
+  --color-primary-500: #22c55e;
+  --color-primary-600: #4ade80;
+  --color-primary-700: #86efac;
+  --color-primary-800: #bbf7d0;
+  --color-primary-900: #dcfce7;
+  --color-primary-950: #f0fdf4;
+
+  --color-secondary-50: #022c22;
+  --color-secondary-100: #064e3b;
+  --color-secondary-200: #065f46;
+  --color-secondary-300: #047857;
+  --color-secondary-400: #059669;
+  --color-secondary-500: #10b981;
+  --color-secondary-600: #34d399;
+  --color-secondary-700: #6ee7b7;
+  --color-secondary-800: #a7f3d0;
+  --color-secondary-900: #d1fae5;
+
+  --color-neutral-0: #020617;
+  --color-neutral-50: #0b1329;
+  --color-neutral-100: #0f172a;
+  --color-neutral-200: #1e293b;
+  --color-neutral-300: #334155;
+  --color-neutral-400: #475569;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #94a3b8;
+  --color-neutral-700: #cbd5e1;
+  --color-neutral-800: #e2e8f0;
+  --color-neutral-900: #f1f5f9;
+  --color-neutral-950: #f8fafc;
+
+  /* Semantic colors */
+  --color-success: #10b981;
+  --color-success-light: #064e3b;
+  --color-success-border: #047857;
+
+  --color-warning: #f59e0b;
+  --color-warning-light: #451a03;
+  --color-warning-border: #78350f;
+
+  --color-error: #ef4444;
+  --color-error-light: #450a0a;
+  --color-error-border: #7f1d1d;
+
+  --color-info: #38bdf8;
+  --color-info-light: #082f49;
+  --color-info-border: #0369a1;
+
+  /* Surfaces */
+  --surface-page: #0f172a;
+  --surface-card: #1e293b;
+  --surface-elevated: #334155;
+  --surface-overlay: rgba(15, 23, 42, 0.9);
+  --surface-input: #0b1329;
+  --surface-hover: #1e293b;
+  --surface-active: #334155;
+  --surface-disabled: #1e293b;
+
+  /* Borders */
+  --border-subtle: #334155;
+  --border-default: #475569;
+  --border-strong: #64748b;
+  --border-focus: #10b981;
+  --border-error: var(--color-error);
+
+  /* Text */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-inverse: #0f172a;
+  --text-link: #34d399;
+  --text-link-hover: #6ee7b7;
+  --text-disabled: #475569;
+  --text-on-primary: #020617;
+
+  --bg-surface: var(--surface-card);
+  --bg-main: var(--surface-page);
+  --bg-surface-elevated: var(--surface-elevated);
+  --text-main: #f8fafc;
+  --text-bright: #ffffff;
+  --text-muted: #94a3b8;
+  --border-prominent: var(--border-subtle);
+  --primary-emerald: #10b981;
+
+  /* Role accents */
+  --accent-blue: #38bdf8;
+  --rust: #f59e0b;
+  --slate: #94a3b8;
+
+  /* App-bar / bottom-nav chrome */
+  --nav-bg: #0f172a;
+  --nav-border: #334155;
+  --nav-accent: #10b981;
+  --nav-on: #f8fafc;
+  --nav-muted: #94a3b8;
+
+  /* Shadows for dark surfaces */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.6);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.7);
+  --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.4);
+}
+
+/* ===== REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+    --transition-normal: 0ms;
+    --transition-slow: 0ms;
+  }
+}

@@ -1,0 +1,76 @@
+# AI Farmer-Buyer Marketplace — local composition + production baseline.
+#
+#   docker compose up --build
+#   → Frontend at http://localhost:8080  · Backend at http://localhost:8000  ·
+#     PostgreSQL on the internal network.
+#
+# Security defaults (see .docker.env.example):
+#   * APP_ENV defaults to "development" so the shared dev JWT secret is allowed.
+#   * For a production-like run override: APP_ENV=production and JWT_SECRET_KEY=<strong>.
+#   * Payment stays in MOCK mode unless REAL provider credentials are supplied.
+#   * No secrets are stored in this file or in the repo.
+name: ai-farmer-buyer-marketplace
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-marketplace}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-marketplace}
+      POSTGRES_DB: ${POSTGRES_DB:-marketplace}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-marketplace} -d ${POSTGRES_DB:-marketplace}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    # Uncomment only for local development tooling (never expose DB in production):
+    # ports:
+    #   - "5432:5432"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-marketplace}:${POSTGRES_PASSWORD:-marketplace}@db:5432/${POSTGRES_DB:-marketplace}
+      # Local dev default only. Production MUST set APP_ENV=production and a strong secret.
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-insecure-secret-change-me-000000000000}
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_MINUTES: ${JWT_ACCESS_TOKEN_MINUTES:-15}
+      JWT_REFRESH_TOKEN_DAYS: ${JWT_REFRESH_TOKEN_DAYS:-30}
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-http://localhost:8080}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # Requests reach the backend through the frontend/nginx proxy (or a real LB).
+      TRUST_PROXY_HEADERS: "true"
+      OTP_PROVIDER_MODE: ${OTP_PROVIDER_MODE:-mock}
+      KYC_PROVIDER_MODE: ${KYC_PROVIDER_MODE:-mock}
+      PAYMENT_PROVIDER_MODE: ${PAYMENT_PROVIDER_MODE:-mock}
+      PAYMENT_MOCK_MODE: ${PAYMENT_MOCK_MODE:-success}
+      NOTIFICATION_PROVIDER_MODE: ${NOTIFICATION_PROVIDER_MODE:-mock}
+      DELIVERY_PROVIDER_MODE: ${DELIVERY_PROVIDER_MODE:-mock}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    restart: unless-stopped
+
+volumes:
+  db_data:

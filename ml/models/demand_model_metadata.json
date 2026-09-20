@@ -1,0 +1,102 @@
+{
+  "model_version": "v1.1.0-evaluated",
+  "is_synthetic": true,
+  "best_model_name": "LightGBM",
+  "residual_std": 111.676,
+  "validation_metrics": {
+    "mae": 114.4394,
+    "rmse": 173.7072,
+    "r2": 0.9674,
+    "mape": 7.5465
+  },
+  "test_metrics": {
+    "mae": 117.727,
+    "rmse": 190.2765,
+    "r2": 0.9642,
+    "mape": 7.5156
+  },
+  "all_models_comparison": {
+    "Historical Average Baseline": {
+      "val": {
+        "mae": 499.663,
+        "rmse": 694.2123,
+        "r2": 0.4796,
+        "mape": 43.6702
+      },
+      "test": {
+        "mae": 496.3516,
+        "rmse": 703.8649,
+        "r2": 0.5098,
+        "mape": 43.5198
+      }
+    },
+    "Random Forest": {
+      "val": {
+        "mae": 134.5554,
+        "rmse": 203.6408,
+        "r2": 0.9552,
+        "mape": 9.0956
+      },
+      "test": {
+        "mae": 146.5201,
+        "rmse": 238.8957,
+        "r2": 0.9435,
+        "mape": 9.5148
+      }
+    },
+    "LightGBM": {
+      "val": {
+        "mae": 114.4394,
+        "rmse": 173.7072,
+        "r2": 0.9674,
+        "mape": 7.5465
+      },
+      "test": {
+        "mae": 117.727,
+        "rmse": 190.2765,
+        "r2": 0.9642,
+        "mape": 7.5156
+      }
+    },
+    "XGBoost": {
+      "val": {
+        "mae": 122.6283,
+        "rmse": 179.1279,
+        "r2": 0.9654,
+        "mape": 8.4586
+      },
+      "test": {
+        "mae": 122.7872,
+        "rmse": 186.2216,
+        "r2": 0.9657,
+        "mape": 8.325
+      }
+    }
+  },
+  "feature_importances": {
+    "historical_demand": 729.0,
+    "price": 647.0,
+    "quantity_sold": 435.0,
+    "month": 375.0,
+    "buyer_type_WHOLESALER": 139.0,
+    "is_holiday_event": 137.0,
+    "buyer_type_INDIVIDUAL": 87.0,
+    "buyer_type_RETAILER": 82.0,
+    "buyer_type_BUSINESS": 58.0,
+    "state_Maharashtra": 29.0,
+    "season_Year-Round": 25.0,
+    "buyer_type_RESTAURANT": 20.0
+  },
+  "forecast_period": "month",
+  "evaluation": {
+    "phase": 22,
+    "candidates": [
+      "Historical Average Baseline",
+      "Random Forest",
+      "LightGBM",
+      "XGBoost"
+    ],
+    "selection_rationale": "Final demand model: LightGBM. Ranked by validation RMSE: LightGBM, XGBoost, Random Forest, Historical Average Baseline. It beats the historical-average baseline by 75.0% relative RMSE (threshold 2%) and holds up on the held-out test split. Model selected on measured performance, not on algorithmic novelty."
+  },
+  "data_disclaimer": "DEMO / SYNTHETIC MODEL: Trained on synthetic demand data for development and initial prototype demonstration."
+}

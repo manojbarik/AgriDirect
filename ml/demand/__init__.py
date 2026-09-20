@@ -1,0 +1,1 @@
+"""Demand Forecasting ML Package (synthetic demo data)."""

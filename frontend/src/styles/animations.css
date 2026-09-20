@@ -1,0 +1,311 @@
+/* ===== ENTER/EXIT ANIMATIONS ===== */
+@keyframes enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes exit {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes enter-right {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes exit-right {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(16px); }
+}
+
+@keyframes enter-scale {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes exit-scale {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.92); }
+}
+
+/* ===== PAGE TRANSITIONS ===== */
+.page-enter {
+  animation: enter var(--transition-normal) ease-out;
+}
+
+.page-exit {
+  animation: exit var(--transition-fast) ease-in;
+}
+
+/* ===== CARD HOVER ===== */
+.card-interactive {
+  transition: transform var(--transition-normal) ease, box-shadow var(--transition-normal) ease;
+}
+
+.card-interactive:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+/* ===== BUTTON STATES ===== */
+.btn-transition {
+  transition: all var(--transition-fast) ease;
+}
+
+.btn-transition:active {
+  transform: scale(0.98);
+}
+
+/* ===== INPUT FOCUS ===== */
+.input-focus {
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+.input-focus:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary-500) 15%, transparent);
+}
+
+/* ===== NAV LINK ===== */
+.nav-link {
+  position: relative;
+  transition: color var(--transition-fast);
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-primary-600);
+  transition: width var(--transition-normal) ease;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  width: 100%;
+}
+
+/* ===== SKELETON SHIMMER ===== */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-neutral-200) 25%,
+    var(--color-neutral-100) 50%,
+    var(--color-neutral-200) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ===== TOAST ANIMATIONS ===== */
+@keyframes toast-enter {
+  from { opacity: 0; transform: translateX(100%) translateY(16px); }
+  to { opacity: 1; transform: translateX(0) translateY(0); }
+}
+
+@keyframes toast-exit {
+  from { opacity: 1; transform: translateX(0) translateY(0); }
+  to { opacity: 0; transform: translateX(100%) translateY(16px); }
+}
+
+.toast-enter { animation: toast-enter var(--transition-normal) ease-out; }
+.toast-exit { animation: toast-exit var(--transition-fast) ease-in; }
+
+/* ===== MODAL/DRAWER ===== */
+@keyframes modal-backdrop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-enter {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes drawer-enter {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.modal-backdrop-enter { animation: modal-backdrop-enter var(--transition-fast) ease-out; }
+.modal-enter { animation: modal-enter var(--transition-normal) ease-out; }
+.drawer-enter { animation: drawer-enter var(--transition-normal) ease-out; }
+
+/* ===== TAB INDICATOR ===== */
+.tab-indicator {
+  transition: transform var(--transition-normal) cubic-bezier(0.16, 1, 0.3, 1), width var(--transition-normal) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ===== DROPDOWN ===== */
+@keyframes dropdown-enter {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-enter { animation: dropdown-enter var(--transition-fast) ease-out; }
+
+/* ===== TOOLTIP ===== */
+@keyframes tooltip-enter {
+  from { opacity: 0; transform: scale(0.9) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.tooltip-enter { animation: tooltip-enter var(--transition-fast) ease-out; }
+
+/* ===== CHART ANIMATIONS ===== */
+@keyframes chart-draw {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes bar-grow {
+  from { transform: scaleY(0); transform-origin: bottom; }
+  to { transform: scaleY(1); transform-origin: bottom; }
+}
+
+.chart-draw { animation: chart-draw 1s ease-out; }
+.bar-grow { animation: bar-grow 0.8s ease-out; }
+
+/* ===== LOADING SPINNER VARIANTS ===== */
+.spinner-sm { width: 16px; height: 16px; border-width: 2px; }
+.spinner-md { width: 24px; height: 24px; border-width: 3px; }
+.spinner-lg { width: 32px; height: 32px; border-width: 3px; }
+
+.spinner {
+  border: 3px solid var(--color-neutral-200);
+  border-top-color: var(--color-primary-600);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ===== BADGE PULSE ===== */
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary-500) 40%, transparent); }
+  50% { box-shadow: 0 0 0 8px transparent; }
+}
+
+.badge-live { animation: badge-pulse 2s infinite; }
+
+/* ===== IMAGE LOAD ===== */
+@keyframes image-load {
+  from { opacity: 0; filter: blur(8px); }
+  to { opacity: 1; filter: blur(0); }
+}
+
+.image-load { animation: image-load 0.6s ease-out; }
+
+/* ===== PROGRESS BAR ===== */
+@keyframes progress-indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.progress-indeterminate::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--color-primary-500), transparent);
+  animation: progress-indeterminate 1.5s infinite;
+}
+
+/* ===== STAGGER CHILDREN ===== */
+.stagger-children > * {
+  opacity: 0;
+  animation: slide-up var(--transition-normal) ease-out forwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 180ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 360ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 420ms; }
+
+/* Ensure stagger children are visible when animations are disabled */
+@media (prefers-reduced-motion: reduce) {
+  .stagger-children > * {
+    opacity: 1 !important;
+    animation: none !important;
+  }
+}
+
+/* ===== SCENE / ATMOSPHERIC ANIMATIONS ===== */
+
+/* Slow cloud drift across the sky */
+@keyframes cloud-drift-slow {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Faster cloud drift (secondary layer) */
+@keyframes cloud-drift-fast {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Floating dust/pollen/firefly particles */
+@keyframes dust-float {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  15%  { opacity: var(--dust-opacity, 0.5); }
+  50%  { transform: translateY(-30px) translateX(12px); }
+  85%  { opacity: var(--dust-opacity, 0.5); }
+  100% { transform: translateY(-60px) translateX(-8px); opacity: 0; }
+}
+
+/* Shooting star streak across the night sky */
+@keyframes shooting-star {
+  0%   { transform: translateX(0) translateY(0); opacity: 0; }
+  10%  { opacity: 0.9; }
+  80%  { opacity: 0.6; }
+  100% { transform: translateX(200px) translateY(120px); opacity: 0; }
+}
+
+/* Utility animation classes for scene components */
+.animate-cloud-drift-slow {
+  animation: cloud-drift-slow 80s linear infinite;
+}
+
+.animate-cloud-drift-fast {
+  animation: cloud-drift-fast 50s linear infinite;
+}
+
+.animate-dust-float {
+  animation: dust-float 12s ease-in-out infinite;
+}
+
+.animate-shooting-star {
+  animation: shooting-star 4s ease-out infinite;
+}
+
+/* Radial vignette overlay for atmospheric depth */
+.bg-radial-vignette {
+  background: radial-gradient(
+    ellipse 70% 60% at 50% 45%,
+    transparent 40%,
+    rgba(7, 15, 11, 0.5) 100%
+  );
+}
+
+/* ===== RESPECT REDUCED MOTION ===== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

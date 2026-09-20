@@ -1,0 +1,10 @@
+[project]
+name = "ai-farmer-buyer-marketplace-ml"
+version = "0.1.0"
+description = "ML workspace for the AI Farmer-Buyer Marketplace"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.pytest.ini_options]
+pythonpath = ["..", "."]
+testpaths = ["tests"]

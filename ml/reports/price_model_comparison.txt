@@ -1,0 +1,7 @@
+                           val_mae  test_mae  val_rmse  test_rmse  val_r2  test_r2
+model                                                                             
+Mean Baseline (reference)  20.4170   20.1590   26.0362    25.1735 -0.0003  -0.0003
+Linear Regression           5.4110    5.8306    7.4301     7.8482  0.9185   0.9028
+Random Forest               3.1505    3.3656    4.3875     4.6382  0.9716   0.9660
+LightGBM                    2.2199    2.1685    3.1800     3.1457  0.9851   0.9844
+XGBoost                     2.4537    2.6329    3.4856     3.7914  0.9821   0.9773
