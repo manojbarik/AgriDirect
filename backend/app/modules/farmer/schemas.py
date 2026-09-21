@@ -144,7 +144,10 @@ class CropListingCreate(BaseModel):
             and self.available_until is not None
             and self.available_until < self.available_from
         ):
-            raise ValueError("available_until must not be before available_from")
+            self.available_from, self.available_until = (
+                self.available_until,
+                self.available_from,
+            )
         return self
 
 
@@ -158,6 +161,19 @@ class CropListingUpdate(BaseModel):
     currency: str | None = Field(default=None, pattern=r"^[A-Z]{3}$")
     available_from: date | None = None
     available_until: date | None = None
+
+    @model_validator(mode="after")
+    def availability_window_valid(self) -> "CropListingUpdate":
+        if (
+            self.available_from is not None
+            and self.available_until is not None
+            and self.available_until < self.available_from
+        ):
+            self.available_from, self.available_until = (
+                self.available_until,
+                self.available_from,
+            )
+        return self
 
 
 class CropListingResponse(BaseModel):

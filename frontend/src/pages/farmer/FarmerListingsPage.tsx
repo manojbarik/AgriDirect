@@ -12,9 +12,11 @@ import {
   pauseListing,
   publishListing,
   updateListing,
+  getFarmerProfile,
   type CropCatalogItem,
   type CropListing,
   type Farm,
+  type FarmerProfile,
 } from '../../api/farmer'
 import { predictPrice, type PricePredictionResult } from '../../api/ai'
 import { PageContainer, PageHeader } from '../../layouts'
@@ -72,6 +74,7 @@ export default function FarmerListingsPage() {
   const [deleting, setDeleting] = useState<CropListing | null>(null)
   const [pricePrediction, setPricePrediction] = useState<PricePredictionResult | null>(null)
   const [predictingPrice, setPredictingPrice] = useState(false)
+  const [profile, setProfile] = useState<FarmerProfile | null>(null)
   const [form, setForm] = useState({
     farm_id: '',
     crop_id: '',
@@ -101,11 +104,13 @@ export default function FarmerListingsPage() {
       maybe(listListings()),
       maybe(listFarms()),
       maybe(listCropCatalog()),
-    ]).then(([listingData, farmData, cropData]) => {
+      maybe(getFarmerProfile()),
+    ]).then(([listingData, farmData, cropData, profileData]) => {
       if (cancelled) return
       setListings(listingData ?? [])
       setFarms(farmData ?? [])
       setCatalog(cropData ?? [])
+      setProfile(profileData ?? null)
       setForm((current) => ({
         ...current,
         farm_id: current.farm_id || farmData?.[0]?.id || '',
@@ -147,6 +152,14 @@ export default function FarmerListingsPage() {
     setNotice(null)
     setSubmitting(true)
     try {
+      let fromDate = form.available_from || undefined
+      let untilDate = form.available_until || undefined
+      if (fromDate && untilDate && fromDate > untilDate) {
+        const temp = fromDate
+        fromDate = untilDate
+        untilDate = temp
+      }
+
       const { data } = await createListing({
         farm_id: form.farm_id,
         crop_id: form.crop_id,
@@ -156,10 +169,23 @@ export default function FarmerListingsPage() {
         unit_price: form.unit_price,
         grade: form.grade || undefined,
         description: form.description || undefined,
-        available_from: form.available_from || undefined,
-        available_until: form.available_until || undefined,
+        available_from: fromDate,
+        available_until: untilDate,
       })
-      setListings((current) => [data, ...current])
+
+      let finalListing = data
+      let isPublished = false
+      if (profile?.verification_status === 'VERIFIED') {
+        try {
+          const pubRes = await publishListing(data.id)
+          finalListing = pubRes.data
+          isPublished = true
+        } catch {
+          // keep as draft if auto-publish fails
+        }
+      }
+
+      setListings((current) => [finalListing, ...current])
       setForm((current) => ({
         ...current,
         title: '',
@@ -170,7 +196,14 @@ export default function FarmerListingsPage() {
         available_from: '',
         available_until: '',
       }))
-      setNotice('Listing created as a draft. Publish it once ready.')
+
+      if (isPublished) {
+        setNotice('Listing created and published to the marketplace.')
+      } else if (profile && profile.verification_status !== 'VERIFIED') {
+        setNotice('Listing saved as draft. Your farmer profile is pending verification before it can be published live.')
+      } else {
+        setNotice('Listing created as a draft. Click Publish whenever ready.')
+      }
     } catch (err) {
       setError(apiErrorMessage(err))
     } finally {
@@ -185,6 +218,14 @@ export default function FarmerListingsPage() {
     setNotice(null)
     setSubmitting(true)
     try {
+      let fromDate = editForm.available_from || undefined
+      let untilDate = editForm.available_until || undefined
+      if (fromDate && untilDate && fromDate > untilDate) {
+        const temp = fromDate
+        fromDate = untilDate
+        untilDate = temp
+      }
+
       const { data } = await updateListing(editing.id, {
         title: editForm.title,
         unit: editForm.unit,
@@ -192,8 +233,8 @@ export default function FarmerListingsPage() {
         unit_price: editForm.unit_price,
         grade: editForm.grade || undefined,
         description: editForm.description || undefined,
-        available_from: editForm.available_from || undefined,
-        available_until: editForm.available_until || undefined,
+        available_from: fromDate,
+        available_until: untilDate,
       })
       setListings((current) =>
         current.map((listing) => (listing.id === editing.id ? { ...listing, ...data } : listing)),
@@ -210,11 +251,22 @@ export default function FarmerListingsPage() {
   const updateStatus = async (id: string, action: 'publish' | 'pause' | 'cancel') => {
     setError(null)
     setNotice(null)
+    if (action === 'publish' && profile && profile.verification_status !== 'VERIFIED') {
+      setError(`Cannot publish: Your profile verification is ${profile.verification_status}. Verified status is required to publish listings.`)
+      return
+    }
     try {
       const call = action === 'publish' ? publishListing : action === 'pause' ? pauseListing : cancelListing
       const { data } = await call(id)
       setListings((current) =>
         current.map((listing) => (listing.id === id ? { ...listing, ...data } : listing)),
+      )
+      setNotice(
+        action === 'publish'
+          ? 'Listing published to marketplace.'
+          : action === 'pause'
+          ? 'Listing paused.'
+          : 'Listing cancelled.'
       )
     } catch (err) {
       setError(apiErrorMessage(err))
@@ -284,6 +336,19 @@ export default function FarmerListingsPage() {
       />
 
       {/* Alerts */}
+      {profile && profile.verification_status !== 'VERIFIED' && (
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50/90 p-4 text-xs text-amber-900">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="font-bold text-sm text-amber-900">
+              Account Verification Status: {profile.verification_status}
+            </p>
+            <p className="text-amber-800">
+              Your farmer account is currently {profile.verification_status.toLowerCase()} administrator verification. You can prepare and save crop listings as drafts now, and they will be ready to publish to the marketplace once approved.
+            </p>
+          </div>
+        </div>
+      )}
       {error && (
         <div className="mb-4 flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-600">
           <AlertTriangle className="w-4 h-4 shrink-0" /> {error}
@@ -360,7 +425,7 @@ export default function FarmerListingsPage() {
           </label>
           <label className="block">
             <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wide">Harvest from</span>
-            <input type="date" value={form.available_from} onChange={(e) => set('available_from')(e.target.value)} className={inputClass} />
+            <input type="date" value={form.available_from} max={form.available_until || undefined} onChange={(e) => set('available_from')(e.target.value)} className={inputClass} />
           </label>
         </div>
 
@@ -399,7 +464,7 @@ export default function FarmerListingsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
           <label className="block">
             <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wide">Harvest until</span>
-            <input type="date" value={form.available_until} onChange={(e) => set('available_until')(e.target.value)} className={inputClass} />
+            <input type="date" value={form.available_until} min={form.available_from || undefined} onChange={(e) => set('available_until')(e.target.value)} className={inputClass} />
           </label>
           <label className="block">
             <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wide">Description</span>
@@ -540,11 +605,11 @@ export default function FarmerListingsPage() {
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
                 <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wide">Harvest from</span>
-                <input type="date" value={editForm.available_from} onChange={(e) => setEdit('available_from')(e.target.value)} className={inputClass} />
+                <input type="date" value={editForm.available_from} max={editForm.available_until || undefined} onChange={(e) => setEdit('available_from')(e.target.value)} className={inputClass} />
               </label>
               <label className="block">
                 <span className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wide">Harvest until</span>
-                <input type="date" value={editForm.available_until} onChange={(e) => setEdit('available_until')(e.target.value)} className={inputClass} />
+                <input type="date" value={editForm.available_until} min={editForm.available_from || undefined} onChange={(e) => setEdit('available_until')(e.target.value)} className={inputClass} />
               </label>
             </div>
             <label className="block">

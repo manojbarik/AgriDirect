@@ -7,7 +7,7 @@ import { Select } from '../components/ui/Dropdown';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import { Skeleton } from '../components/ui/Skeleton';
 import { useToast } from '../components/ui/Toast';
-import { listFarms, listCropCatalog, createListing } from '../api/farmer';
+import { listFarms, listCropCatalog, createListing, publishListing } from '../api/farmer';
 import type { Farm, CropCatalogItem } from '../api/farmer';
 
 const GRADES = [
@@ -74,7 +74,15 @@ export const AddHarvestPage: React.FC = () => {
     if (!validate()) return;
     setSubmitting(true);
     try {
-      await createListing({
+      let fromDate = availableFrom || undefined;
+      let untilDate = availableUntil || undefined;
+      if (fromDate && untilDate && fromDate > untilDate) {
+        const temp = fromDate;
+        fromDate = untilDate;
+        untilDate = temp;
+      }
+
+      const { data: listing } = await createListing({
         farm_id: farmId,
         crop_id: cropId,
         title: title.trim(),
@@ -83,10 +91,27 @@ export const AddHarvestPage: React.FC = () => {
         unit_price: price,
         grade: grade || undefined,
         description: description.trim() || undefined,
-        available_from: availableFrom || undefined,
-        available_until: availableUntil || undefined,
+        available_from: fromDate,
+        available_until: untilDate,
       });
-      toast({ type: 'success', title: 'Harvest listed', message: `${title.trim()} is now live on the marketplace.` });
+
+      let isPublished = false;
+      try {
+        await publishListing(listing.id);
+        isPublished = true;
+      } catch {
+        // If farmer is unverified or publish fails, listing stays as DRAFT
+      }
+
+      if (isPublished) {
+        toast({ type: 'success', title: 'Harvest published', message: `${title.trim()} is now live on the marketplace.` });
+      } else {
+        toast({
+          type: 'warning',
+          title: 'Saved as draft',
+          message: `${title.trim()} saved as draft. Verified farmer profile is required before publishing live.`,
+        });
+      }
       navigate('/farmer/dashboard');
     } catch (err) {
       toast({
@@ -238,6 +263,7 @@ export const AddHarvestPage: React.FC = () => {
                         label="Available from"
                         type="date"
                         value={availableFrom}
+                        max={availableUntil || undefined}
                         onChange={(e) => setAvailableFrom(e.target.value)}
                       />
                     </div>
@@ -246,6 +272,7 @@ export const AddHarvestPage: React.FC = () => {
                         label="Available until"
                         type="date"
                         value={availableUntil}
+                        min={availableFrom || undefined}
                         onChange={(e) => setAvailableUntil(e.target.value)}
                       />
                     </div>
