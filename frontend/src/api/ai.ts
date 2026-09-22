@@ -226,3 +226,54 @@ export interface RouteOptimizeResult {
 
 export const optimizeRoute = (payload: RouteOptimizePayload) =>
   apiClient.post<RouteOptimizeResult>('/ai/route/optimize', payload)
+
+// ─────────────────────────────────────────────────────────────
+// Assistant Chat & Voice (calls backend → Gemini, never direct)
+// ─────────────────────────────────────────────────────────────
+
+export interface AssistantHistoryItem {
+  role: 'user' | 'model'
+  text: string
+}
+
+export interface AssistantChatPayload {
+  message: string
+  conversation_history?: AssistantHistoryItem[]
+  context?: Record<string, string>
+}
+
+export interface AssistantAction {
+  type: 'navigate' | 'confirm_action' | 'form_fill' | 'tool_result'
+  payload: Record<string, any>
+}
+
+export interface AssistantChatResult {
+  reply: string
+  source: string
+  action?: AssistantAction | null
+  suggested_actions?: string[] | null
+}
+
+export const assistantChat = (payload: AssistantChatPayload) =>
+  apiClient.post<AssistantChatResult>('/ai/assistant/chat', payload)
+
+export const assistantVoice = (payload: AssistantChatPayload) =>
+  apiClient.post<AssistantChatResult>('/ai/assistant/voice', payload)
+
+// ─────────────────────────────────────────────────────────────
+// System Integrations Status
+// ─────────────────────────────────────────────────────────────
+
+export interface IntegrationStatus {
+  gemini: string
+  weather: string
+  tavily: string
+  smtp: string
+  whatsapp: string
+  telephony: string
+  database: string
+}
+
+export const getIntegrations = () =>
+  apiClient.get<IntegrationStatus>('/system/integrations')
+

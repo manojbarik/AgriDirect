@@ -11,3 +11,4 @@ export { Dropdown, Select, type DropdownProps, type SelectProps, type DropdownIt
 export { Tooltip, type TooltipProps } from './Tooltip';
 export { StatCard, type StatCardProps } from './StatCard';
 export { EmptyState, type EmptyStateProps } from './EmptyState';
+export { ComingSoonCard, type ComingSoonCardProps } from './ComingSoonCard';

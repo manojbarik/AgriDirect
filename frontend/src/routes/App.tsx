@@ -40,6 +40,8 @@ import LegacyOrdersPage from '../pages/orders/OrdersPage'
 import OrderDetailPage from '../pages/orders/OrderDetailPage'
 import { OrdersPage as PremiumOrdersPage } from '../pages/OrdersPage'
 import LegacyMarketplacePage from '../pages/marketplace/MarketplacePage'
+import LivestockMarketplacePage from '../pages/marketplace/LivestockMarketplacePage'
+import FarmerLivestockPage from '../pages/farmer/FarmerLivestockPage'
 import LegacyListingDetailPage from '../pages/marketplace/ListingDetailPage'
 import FarmerProfilePage from '../pages/marketplace/FarmerProfilePage'
 import ContractsPage from '../pages/contracts/ContractsPage'
@@ -69,7 +71,9 @@ import { EscrowSection } from '../components/home/EscrowSection'
 import { TrustSection } from '../components/home/TrustSection'
 import { ContractSection } from '../components/home/ContractSection'
 import { AgricultureEnvironment } from '../components/scene/AgricultureEnvironment'
-import { AgriDirectAssistant } from '../components/ai/AgriDirectAssistant'
+import { AssistantProvider } from '../contexts/AssistantContext'
+import { useAssistant } from '../contexts/useAssistant'
+import { GlobalAssistantWidget } from '../components/ai/GlobalAssistantWidget'
 import { Footer } from '../layouts/Footer'
 import { Sprout, Bot } from 'lucide-react'
 import { getRealWorldTimeOfDay } from '../utils/timeOfDay'
@@ -95,7 +99,7 @@ function dashboardPath(role: string): string {
 function HomePage() {
   const [timeMode, setTimeMode] = useState<'auto' | 'golden' | 'day' | 'twilight' | 'night'>('auto')
   const [currentTime, setCurrentTime] = useState<'golden' | 'day' | 'twilight' | 'night'>(getRealWorldTimeOfDay())
-  const [aiAssistantOpen, setAiAssistantOpen] = useState(false)
+  const { openAssistant } = useAssistant()
   const { user } = useAuth()
 
   // Real-world clock sync
@@ -201,7 +205,7 @@ function HomePage() {
 
             {/* AgriDirect AI Button */}
             <button
-              onClick={() => setAiAssistantOpen(true)}
+              onClick={() => openAssistant()}
               className="px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 border border-emerald-500/30 text-emerald-300 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
               title="Open AgriDirect AI Assistant"
             >
@@ -276,7 +280,7 @@ function HomePage() {
               </Link>
 
               <button
-                onClick={() => setAiAssistantOpen(true)}
+                onClick={() => openAssistant()}
                 className="rounded-full bg-black/60 hover:bg-black/80 px-5 py-3 text-sm font-semibold text-amber-300 hover:text-white border border-white/15 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <Bot className="w-4 h-4 text-amber-300" />
@@ -325,7 +329,6 @@ function HomePage() {
           </div>
         </main>
 
-        <AgriDirectAssistant isOpen={aiAssistantOpen} onClose={() => setAiAssistantOpen(false)} />
       </AgricultureEnvironment>
 
       {/* Enterprise AgriDirect Dashboard Suite with Generous Spacing */}
@@ -545,7 +548,9 @@ export default function App() {
     <I18nProvider>
       <ThemeApplier />
       <CartProvider>
-<Routes>
+        <AssistantProvider>
+          <GlobalAssistantWidget />
+          <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/home-legacy" element={<HomePage />} />
         <Route path="/health" element={<HealthPage />} />
@@ -556,6 +561,7 @@ export default function App() {
         <Route path="/verify" element={<VerifyPage />} />
         <Route path="/marketplace" element={<LegacyMarketplacePage />} />
         <Route path="/marketplace-legacy" element={<LegacyMarketplacePage />} />
+        <Route path="/marketplace/livestock" element={<LivestockMarketplacePage />} />
         <Route path="/marketplace/listings/:id" element={<LegacyListingDetailPage />} />
         <Route path="/marketplace-legacy/listings/:id" element={<LegacyListingDetailPage />} />
         <Route path="/marketplace/farmers/:farmerId" element={<FarmerProfilePage />} />
@@ -585,6 +591,7 @@ export default function App() {
           <Route path="/farmer/onboarding" element={<FarmerRoute><FarmerOnboardingPage /></FarmerRoute>} />
           <Route path="/farmer/farm" element={<FarmerRoute><FarmerFarmPage /></FarmerRoute>} />
           <Route path="/farmer/listings" element={<FarmerRoute><FarmerListingsPage /></FarmerRoute>} />
+          <Route path="/farmer/livestock" element={<FarmerRoute><FarmerLivestockPage /></FarmerRoute>} />
           <Route path="/farmer/recommendations" element={<FarmerRoute><FarmerRecommendationsPage /></FarmerRoute>} />
           <Route path="/farmer/orders" element={<FarmerRoute><LegacyOrdersPage /></FarmerRoute>} />
           <Route path="/farmer/orders/:id" element={<FarmerRoute><OrderDetailPage /></FarmerRoute>} />
@@ -641,6 +648,7 @@ export default function App() {
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+        </AssistantProvider>
       </CartProvider>
     </I18nProvider>
   )

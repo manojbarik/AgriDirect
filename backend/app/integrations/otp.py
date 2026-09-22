@@ -191,6 +191,17 @@ class SmtpOtpProvider(OtpProvider):
     def send(self, recipient: str, code: str) -> OtpDeliveryReceipt:
         import smtplib
 
+        if "@" not in recipient:
+            logger.info(
+                "Recipient %s is a phone number; SMTP email provider cannot deliver to phone. "
+                "Using phone development receipt.",
+                recipient,
+            )
+            return OtpDeliveryReceipt(
+                provider_reference=f"phone_dev:{recipient}",
+                mock_code=code,
+            )
+
         message = MIMEText(
             render_otp_email(code, ttl_minutes=get_settings().otp_ttl_minutes), "html"
         )

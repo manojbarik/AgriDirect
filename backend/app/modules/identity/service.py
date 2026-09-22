@@ -119,7 +119,16 @@ def _challenge_response(
         purpose=challenge.purpose,
         expires_at=challenge.expires_at,
         resend_after_seconds=get_settings().otp_resend_cooldown_seconds,
-        mock_code=receipt.mock_code if _mock_code_enabled() else None,
+        mock_code=receipt.mock_code
+        if (
+            _mock_code_enabled()
+            or (
+                get_settings().app_env == "development"
+                and receipt.provider_reference
+                and receipt.provider_reference.startswith("phone_dev:")
+            )
+        )
+        else None,
     )
 
 

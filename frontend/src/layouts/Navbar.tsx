@@ -100,6 +100,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAiAssistant }) => {
           </Link>
 
           <Link
+            to="/marketplace/livestock"
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              location.pathname.startsWith('/marketplace/livestock')
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <span>🐾</span>
+            <span>Livestock</span>
+          </Link>
+
+          <Link
             to="/prices"
             className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all ${
               location.pathname === '/prices'
@@ -323,6 +335,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAiAssistant }) => {
           >
             <Store className="w-4 h-4 text-emerald-400" />
             <span>Marketplace</span>
+          </Link>
+
+          <Link
+            to="/marketplace/livestock"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-slate-200 hover:bg-white/5"
+          >
+            <span>🐾</span>
+            <span>Livestock Market</span>
           </Link>
 
           <Link

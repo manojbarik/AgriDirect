@@ -2,6 +2,7 @@ from app.db.models.ai import AiPrediction
 from app.db.models.environment import WeatherForecast
 from app.db.models.farm_note import FarmNote
 from app.db.models.identity import OtpChallenge, PasswordResetToken, RefreshToken
+from app.db.models.livestock import LivestockListing
 from app.db.models.logistics import Shipment, TrackingEvent
 from app.db.models.marketplace import (
     BuyerDemand,
@@ -69,6 +70,7 @@ __all__ = [
     "Farm",
     "FarmNote",
     "LogisticsPartnerProfile",
+    "LivestockListing",
     "Notification",
     "Order",
     "OrderItem",

@@ -37,3 +37,31 @@ def today(
     if row is None:
         return None
     return WeatherTodayResponse.model_validate(row)
+
+
+@router.get(
+    "/live",
+    summary="Get live weather from OpenWeather API (public)",
+)
+def live_weather(
+    state: str = Query(min_length=2, max_length=100),
+    district: str = Query(min_length=2, max_length=100),
+):
+    from app.modules.weather import openweather_service
+
+    return openweather_service.get_current(state.strip(), district.strip())
+
+
+@router.get(
+    "/live/forecast",
+    summary="Get live weather forecast from OpenWeather API (public)",
+)
+def live_forecast(
+    state: str = Query(min_length=2, max_length=100),
+    district: str = Query(min_length=2, max_length=100),
+    days: int = Query(default=5, ge=1, le=7),
+):
+    from app.modules.weather import openweather_service
+
+    return openweather_service.get_forecast(state.strip(), district.strip(), days)
+

@@ -79,6 +79,7 @@ export const ROLE_NAVIGATION: Record<Role, RoleNavigation> = {
             children: [
               { label: 'My Products', to: '/farmer/products', icon: Package },
               { label: 'Listings', to: '/farmer/listings', icon: Store },
+              { label: 'Livestock', to: '/farmer/livestock', icon: Store },
               { label: 'Inventory', to: '/farmer/inventory', icon: Warehouse },
             ],
           },

@@ -112,6 +112,39 @@ class Settings(BaseSettings):
     notification_provider_mode: str = "mock"
     delivery_provider_mode: str = "mock"
 
+    # AI Assistant (Gemini)
+    gemini_api_key: str = ""
+    gemini_live_model: str = Field(
+        default="gemini-2.5-flash",
+        validation_alias=AliasChoices(
+            "GEMINI_LIVE_MODEL",
+            "GEMINI_MODEL",
+        ),
+    )
+    gemini_voice: str = "Kore"
+
+    # External search (Tavily)
+    tavily_api_key: str = ""
+
+    # Weather (OpenWeather)
+    openweather_api_key: str = ""
+
+    # AgriDirect API base URL for external webhooks/assistant
+    agridirect_api_url: str = Field(
+        default="http://127.0.0.1:8000",
+        validation_alias=AliasChoices(
+            "AGRIDIRECT_API_URL",
+            "API_URL",
+        ),
+    )
+
+    # WhatsApp (future integration)
+    whatsapp_api_key: str = ""
+    whatsapp_phone_id: str = ""
+
+    # Telephony (future integration)
+    telephony_provider_key: str = ""
+
     # Transparent trust score engine configuration.
     trust_calculation_version: str = "v1"
     trust_verification_weight: float = 20.0

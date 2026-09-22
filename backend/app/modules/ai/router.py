@@ -201,3 +201,109 @@ def route_optimize(
     _user: User = Depends(require_roles("FARMER", "BUYER", "LOGISTICS")),
 ) -> RouteOptimizeResponse:
     return optimize_route(payload)
+
+
+# ─────────────────────────────────────────────────────────────
+# Assistant Chat & Voice (Gemini-backed)
+# ─────────────────────────────────────────────────────────────
+
+from pydantic import BaseModel, Field as PydanticField  # noqa: E402
+
+ASSISTANT_LIMITER = rate_limit(limit=30, window_seconds=60, bucket="ai_assistant")
+
+
+class AssistantHistoryItem(BaseModel):
+    role: str = PydanticField(examples=["user", "model"])
+    text: str = PydanticField(examples=["What is the price of tomato?"])
+
+
+class AssistantChatRequest(BaseModel):
+    message: str = PydanticField(min_length=1, max_length=2000, examples=["What is today's wheat price in Punjab?"])
+    conversation_history: list[AssistantHistoryItem] = PydanticField(default_factory=list)
+    context: dict | None = PydanticField(default=None, examples=[{"role": "FARMER", "location": "Odisha"}])
+
+
+class AssistantAction(BaseModel):
+    type: str  # "navigate" | "confirm_action" | "form_fill" | "tool_result"
+    payload: dict = PydanticField(default_factory=dict)
+
+
+class AssistantChatResponse(BaseModel):
+    reply: str
+    source: str = "gemini"
+    action: AssistantAction | None = None
+    suggested_actions: list[str] | None = None
+
+
+@router.post(
+    "/assistant/chat",
+    response_model=AssistantChatResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Send a message to the AgriDirect AI Assistant (Gemini-backed)",
+)
+def assistant_chat(
+    payload: AssistantChatRequest,
+    _: None = Depends(ASSISTANT_LIMITER),
+) -> AssistantChatResponse:
+    from app.modules.ai import gemini_service
+
+    if not gemini_service.is_configured():
+        return AssistantChatResponse(
+            reply="The AI Assistant is not configured. Please set GEMINI_API_KEY in the backend environment.",
+            source="error",
+        )
+
+    history = [{"role": h.role, "text": h.text} for h in payload.conversation_history]
+    result = gemini_service.chat(
+        message=payload.message,
+        conversation_history=history,
+        context=payload.context,
+    )
+    if isinstance(result, str):
+        return AssistantChatResponse(reply=result, source="gemini")
+
+    return AssistantChatResponse(
+        reply=result.get("reply", ""),
+        source="gemini",
+        action=result.get("action"),
+        suggested_actions=result.get("suggested_actions"),
+    )
+
+
+@router.post(
+    "/assistant/voice",
+    response_model=AssistantChatResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Send a voice transcription to the AI Assistant and get a text reply for TTS",
+)
+def assistant_voice(
+    payload: AssistantChatRequest,
+    _: None = Depends(ASSISTANT_LIMITER),
+) -> AssistantChatResponse:
+    from app.modules.ai import gemini_service
+
+    if not gemini_service.is_configured():
+        return AssistantChatResponse(
+            reply="Voice assistant is not configured. Please set GEMINI_API_KEY.",
+            source="error",
+        )
+
+    # For voice, add a hint to keep responses concise and spoken-word friendly
+    voice_context = payload.context or {}
+    voice_context["output_format"] = "spoken_response"
+
+    history = [{"role": h.role, "text": h.text} for h in payload.conversation_history]
+    result = gemini_service.chat(
+        message=payload.message,
+        conversation_history=history,
+        context=voice_context,
+    )
+    if isinstance(result, str):
+        return AssistantChatResponse(reply=result, source="gemini_voice")
+
+    return AssistantChatResponse(
+        reply=result.get("reply", ""),
+        source="gemini_voice",
+        action=result.get("action"),
+        suggested_actions=result.get("suggested_actions"),
+    )
