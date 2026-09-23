@@ -82,7 +82,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const { data } = await loginRequest(email, password)
-    setTokens(data.tokens.access_token, data.tokens.refresh_token)
+    const accessToken = data?.tokens?.access_token ?? (data as unknown as { access_token?: string })?.access_token
+    const refreshToken = data?.tokens?.refresh_token ?? (data as unknown as { refresh_token?: string })?.refresh_token
+
+    if (!accessToken || !refreshToken) {
+      throw new Error(
+        'Invalid authentication response from server. Check that your backend API is running and VITE_API_BASE_URL is correct.'
+      )
+    }
+
+    setTokens(accessToken, refreshToken)
     const { data: me } = await fetchMe()
     setUser(me)
     return me
@@ -98,7 +107,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (code: string) => {
       if (!pendingChallenge) return
       const { data } = await verifyOtp(pendingChallenge.challenge_id, code)
-      setTokens(data.tokens.access_token, data.tokens.refresh_token)
+      const accessToken = data?.tokens?.access_token ?? (data as unknown as { access_token?: string })?.access_token
+      const refreshToken = data?.tokens?.refresh_token ?? (data as unknown as { refresh_token?: string })?.refresh_token
+
+      if (!accessToken || !refreshToken) {
+        throw new Error(
+          'Invalid verification response from server. Check that your backend API is running and VITE_API_BASE_URL is correct.'
+        )
+      }
+
+      setTokens(accessToken, refreshToken)
       const { data: me } = await fetchMe()
       setUser(me)
       setPendingChallenge(null)

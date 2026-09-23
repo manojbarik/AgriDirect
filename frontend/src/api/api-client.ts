@@ -23,7 +23,7 @@ function isAuthFlowUrl(url: string | undefined): boolean {
   return AUTH_FLOW_PREFIXES.some((prefix) => url.startsWith(prefix))
 }
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/+$/, '')
 
 export const apiClient = axios.create({
   baseURL: `${apiBaseUrl}/api/v1`,
@@ -46,7 +46,23 @@ interface RetriableRequestConfig extends InternalAxiosRequestConfig {
 }
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // If the server returned an HTML document (SPA rewrite fallback index.html),
+    // it means the frontend is calling itself instead of the backend API.
+    if (
+      typeof response.data === 'string' &&
+      (response.data.includes('<!doctype') ||
+        response.data.includes('<!DOCTYPE') ||
+        response.data.includes('<html'))
+    ) {
+      return Promise.reject(
+        new Error(
+          'API request returned HTML instead of JSON. Ensure VITE_API_BASE_URL is set in Render to your backend URL (e.g. https://your-backend.onrender.com).'
+        )
+      )
+    }
+    return response
+  },
   async (error: AxiosError) => {
     const original = error.config as RetriableRequestConfig | undefined
     const refreshToken = getRefreshToken()
