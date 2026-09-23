@@ -207,13 +207,24 @@ class Settings(BaseSettings):
             return value
 
         # -----------------------------------------
-        # Render PostgreSQL
+        # PostgreSQL normalization
         # -----------------------------------------
-        if value.startswith("postgresql://"):
-            return (
-                "postgresql+psycopg://"
-                + value[len("postgresql://") :]
-            )
+        # Render, Cloud SQL, Supabase, and common setup variations provide:
+        #   postgres://...
+        #   postgresql://...
+        # or users accidentally configure:
+        #   postgresql+postgresql://...
+        #   postgresql+psycopg2://...
+        # Since this project uses Psycopg 3 (psycopg[binary]),
+        # normalize all these to postgresql+psycopg://...
+        for prefix in (
+            "postgresql+postgresql://",
+            "postgresql+psycopg2://",
+            "postgresql://",
+            "postgres://",
+        ):
+            if value.startswith(prefix):
+                return "postgresql+psycopg://" + value[len(prefix) :]
 
         # -----------------------------------------
         # Already normalized PostgreSQL URL
