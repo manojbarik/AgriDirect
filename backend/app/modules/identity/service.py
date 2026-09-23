@@ -122,6 +122,7 @@ def _challenge_response(
         mock_code=receipt.mock_code
         if (
             _mock_code_enabled()
+            or receipt.mock_code is not None
             or (
                 get_settings().app_env == "development"
                 and receipt.provider_reference

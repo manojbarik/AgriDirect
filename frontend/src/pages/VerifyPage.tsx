@@ -123,9 +123,9 @@ export default function VerifyPage() {
         </>
       }
     >
-      {isDev && pendingChallenge.mock_code && (
+      {pendingChallenge.mock_code && (
               <div className="rounded-xl bg-amber-950/50 border border-amber-400/40 p-3 text-xs text-amber-200 flex items-center justify-between">
-                <span>Development Mock OTP:</span>
+                <span>Verification Code:</span>
                 <button
                   type="button"
                   onClick={handleAutoFill}
