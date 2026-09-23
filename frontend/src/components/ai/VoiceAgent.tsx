@@ -67,9 +67,9 @@ const STATE_CONFIG: Record<
 }
 
 const LANGUAGES = [
+  { code: 'or-IN', label: 'Odia (ଓଡ଼ିଆ)' },
   { code: 'hi-IN', label: 'Hindi (हिंदी)' },
   { code: 'en-IN', label: 'Indian English' },
-  { code: 'or-IN', label: 'Odia (ଓଡ଼ିଆ)' },
   { code: 'pa-IN', label: 'Punjabi (ਪੰਜਾਬੀ)' },
 ]
 

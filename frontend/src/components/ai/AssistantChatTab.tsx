@@ -12,11 +12,11 @@ interface Message {
 }
 
 const QUICK_PROMPTS = [
+  'ଆଜି ଧାନ ଦର କେତେ? (What is today\'s paddy rate?)',
   'What is the best sowing time for Wheat in North India?',
   'How do I identify and treat early blight on Tomatoes?',
   'What are the eligibility criteria for PM-KISAN scheme?',
-  'How to maximize milk yield in Gir cows naturally?',
-  'When is the optimal time to harvest Kharif Onions?',
+  'ଭୁବନେଶ୍ୱରରେ ଆଜି ଆବହାୱା କ\'ଣ?',
 ]
 
 // Offline fallback knowledge base — used only when the backend is unreachable.
@@ -54,9 +54,9 @@ export const AssistantChatTab: React.FC<{ onStartVoice?: () => void }> = ({ onSt
     {
       id: 'welcome',
       sender: 'ai',
-      text: 'Namaste! I am AgriDirect AI Assistant powered by Gemini. Ask me anything about crop protection, livestock care, market prices, weather advisories, or government agricultural subsidies.',
+      text: 'ନମସ୍କାର! ମୁଁ ଜାର୍ଭିସ — AgriDirect AI, ମାନୋଜ ବାରିକଙ୍କ ଦ୍ୱାରା ନିର୍ମିତ। ଆପଣ Odia, Hindi, ବା English ରେ ପ୍ରଶ୍ନ କରନ୍ତୁ! 🌾\n\nNamaste! I am Jarvis, your AgriDirect AI built by Manoj Barik. Ask me about crops, market prices, weather, or schemes.',
       timestamp: 'Just now',
-      suggestions: ['Wheat sowing time', 'Tomato blight cure', 'PM-KISAN details', 'Gir cow care'],
+      suggestions: ['ଆଜି ଧାନ ଦର କେତେ?', 'Wheat price Punjab', 'PM-KISAN details', 'Tomato blight cure'],
     },
   ])
   const [input, setInput] = useState('')
@@ -255,7 +255,7 @@ export const AssistantChatTab: React.FC<{ onStartVoice?: () => void }> = ({ onSt
               handleSend()
             }
           }}
-          placeholder="Ask in English or Hindi (e.g. Tomato blight, Wheat sowing)..."
+          placeholder="Ask in Odia (ଓଡ଼ିଆ), Hindi, or English — e.g. ଆଜି ଧାନ ଦର?"
           className="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
         />
         <Button

@@ -64,19 +64,30 @@ def predict_price(
 
     # Default historical price fallback based on common crops if missing
     if historical_avg_price is None or historical_avg_price <= 0:
+        # Realistic INR per kg prices based on APMC mandi data (Sep 2026)
         crop_base_map = {
-            "Tomato": 25.0,
-            "Potato": 18.0,
-            "Onion": 22.0,
-            "Green Chilli": 40.0,
-            "Rice": 50.0,
-            "Wheat": 28.0,
-            "Maize": 22.0,
-            "Soybean": 45.0,
-            "Groundnut": 55.0,
-            "Mango": 65.0,
+            "Tomato": 12.0,       # ₹12/kg → ₹1200/qtl
+            "Potato": 10.0,       # ₹10/kg → ₹1000/qtl
+            "Onion": 14.0,        # ₹14/kg → ₹1400/qtl
+            "Green Chilli": 28.0, # ₹28/kg → ₹2800/qtl
+            "Brinjal": 9.0,       # ₹9/kg  → ₹900/qtl
+            "Cauliflower": 11.0,  # ₹11/kg → ₹1100/qtl
+            "Cabbage": 8.0,       # ₹8/kg  → ₹800/qtl
+            "Okra": 18.0,         # ₹18/kg → ₹1800/qtl
+            "Paddy": 22.0,        # ₹22/kg → ₹2200/qtl (raw paddy)
+            "Rice": 24.0,         # ₹24/kg → ₹2400/qtl (milled)
+            "Wheat": 22.0,        # ₹22/kg → ₹2200/qtl (MSP aligned)
+            "Maize": 18.0,        # ₹18/kg → ₹1800/qtl
+            "Soybean": 40.0,      # ₹40/kg → ₹4000/qtl
+            "Groundnut": 50.0,    # ₹50/kg → ₹5000/qtl
+            "Mango": 30.0,        # ₹30/kg → ₹3000/qtl
+            "Banana": 15.0,       # ₹15/kg → ₹1500/qtl
+            "Sugarcane": 3.5,     # ₹3.5/kg → ₹350/qtl (FRP price)
+            "Cotton": 65.0,       # ₹65/kg → ₹6500/qtl
+            "Mustard": 52.0,      # ₹52/kg → ₹5200/qtl (MSP aligned)
+            "Turmeric": 85.0,     # ₹85/kg → ₹8500/qtl
         }
-        hist_val = crop_base_map.get(crop_name, 30.0)
+        hist_val = crop_base_map.get(crop_name, 20.0)  # Default ₹20/kg
     else:
         hist_val = float(historical_avg_price)
 

@@ -223,17 +223,21 @@ _TOOL_DECLARATIONS: list[genai_types.FunctionDeclaration] = [
 # ---------------------------------------------------------------------------
 
 _SYSTEM_PROMPT = """\
-You are the AgriDirect AI Global Assistant — an intelligent, empathetic, and highly capable \
-operating partner for Indian farmers, bulk buyers, consumers, and logistics partners on AgriDirect.
+You are Jarvis — the AgriDirect AI Intelligence Assistant, built by Manoj Barik. \
+You are an intelligent, empathetic, and highly capable operating partner for Indian farmers, \
+bulk buyers, consumers, and logistics partners on AgriDirect.
 Tagline: "From Farm to Market, Intelligently."
 
 CORE IDENTITY & TONE:
-• Voice persona: Warm, trustworthy, articulate Indian female advisor (configured as voice 'Kore').
-• Multilingual: You fluently understand and respond in English, Hindi (हिंदी), Odia (ଓଡ଼ିଆ), and Hinglish.
-  - If the user greets or queries in Odia (e.g. "ଆଜି ଧାନର ଦର କେତେ?", "Mu rice sell karibaku chahunchi"), reply naturally in Odia / Hinglish.
-  - If the user writes in Hindi (e.g. "आज गेहूँ का भाव क्या है?"), reply in Hindi.
-  - If the user writes in English, reply in crisp, helpful English.
-• Spoken Responses: When spoken audio is used, keep responses clear, concise, conversational, and direct (avoid reading long markdown tables aloud).
+• Name: Jarvis (AgriDirect Intelligent Assistant, created by Manoj Barik for AgriDirect platform)
+• Voice persona: Warm, confident, trustworthy Indian AI advisor. Speak like a knowledgeable friend, not a robot.
+• Multilingual — you MUST detect and respond in the user's language:
+  - ODIA: If the user writes in Odia script (ଓଡ଼ିଆ) or Romanized Odia (e.g. "Mu", "Aau", "Kana", "Karibaku", "Bhala", "Odia words"), YOU MUST reply FULLY in Odia language. Example: "ଆଜି ଧାନର ଦର କ'ଣ?" → Reply in Odia: "ଆଜି ଧାନର ଆନୁମାନିକ ଦର ₹2,240 ପ୍ରତି କ୍ୱିଣ୍ଟାଲ, ଓଡ଼ିଶାର ମଣ୍ଡିରେ।"
+  - HINDI: If the user writes in Hindi (e.g. "आज गेहूँ का भाव?"), reply in Hindi.
+  - HINGLISH: If the user mixes Hindi/English, reply in Hinglish.
+  - ENGLISH: If the user writes in English, reply in crisp, helpful English.
+  - CRITICAL: NEVER respond in English if the user spoke in Odia. Always match language.
+• Spoken Voice Responses: Keep voice replies SHORT (2-3 sentences max), warm, conversational. No markdown, no bullet points, no tables when speaking.
 
 PRIMARY CAPABILITIES:
 1. Navigation: When the user wants to go to a page ("open marketplace", "take me to orders", "show my farm notes", "check weather"), use the `navigate_to_route` tool.
@@ -242,11 +246,19 @@ PRIMARY CAPABILITIES:
 4. Weather & Agronomy: Provide hyper-local weather alerts and IPM pest guidance via `get_weather`.
 5. Safe Financial Confirmation: For placing orders or creating listings, NEVER execute silently. Always call `prepare_order_action` or `prepare_listing_action` so the user receives an interactive Confirmation Card with [Confirm] and [Cancel] buttons.
 6. Research & Schemes: For external agriculture news or government schemes (PM-KISAN, PMKSY), use `search_external` (Tavily).
+7. Escrow Status: When users ask about payment, escrow, or settlement, explain the 3-step milestone escrow process: Deposit → Delivery Verification → Instant Release to Farmer.
+
+ODIA LANGUAGE EXAMPLES (use these patterns):
+• Greeting: "ନମସ୍କାର! ମୁଁ ଜାର୍ଭିସ, ଆଗ୍ରୀଡାଇରେକ୍ଟ AI। ଆପଣଙ୍କୁ କିଭଳି ସାହାଯ୍ୟ କରିବି?"
+• Price query: "ଆଜି [ଫସଲ]ର ଆନୁମାନିକ ଦର ₹[amount] ପ୍ରତି [unit]।"
+• Weather: "ଆଜି [ଜିଲ୍ଲା]ରେ ପାଣିପାଗ [condition]। [farming_tip]।"
+• Encourage: "ଆପଣ ଠିକ୍ ଜାଗାରେ ଆସିଛନ୍ତି!"
 
 STRICT SAFETY RULES:
 • Never invent market prices or pretend predictions are guarantees.
 • Use ₹ (INR) and metric units (kg, quintal, tonne, acre, hectare).
 • Never expose private API keys or database connection strings.
+• Always identify yourself as Jarvis when asked who you are.
 """
 
 
@@ -501,59 +513,7 @@ def _execute_tool(name: str, args: dict[str, Any]) -> tuple[dict[str, Any], dict
         return {"error": str(e)}, None
 
 
-def chat(
-    message: str,
-    conversation_history: list[dict[str, str]] | None = None,
-    context: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Send a message to Gemini and return the structured response."""
-    client = _get_client()
-
-    # Build contents from history
-    contents: list[genai_types.Content] = []
-    if conversation_history:
-        for entry in conversation_history[-20:]:
-            role = "user" if entry.get("role") == "user" else "model"
-            contents.append(
-                genai_types.Content(
-                    role=role,
-                    parts=[genai_types.Part.from_text(text=entry.get("text", ""))],
-                )
-            )
-
-    # Add current message
-    contents.append(
-        genai_types.Content(
-            role="user",
-            parts=[genai_types.Part.from_text(text=message)],
-        )
-    )
-
-    # Enrich system prompt with active page, role, and language context
-    system_prompt = _SYSTEM_PROMPT
-    if context:
-        ctx_lines = ["\n\nACTIVE APPLICATION CONTEXT:"]
-        if context.get("role"):
-            ctx_lines.append(f"- User Role: {context['role']}")
-        if context.get("currentRoute"):
-            ctx_lines.append(f"- Current Page Route: {context['currentRoute']}")
-        if context.get("location"):
-            ctx_lines.append(f"- User Region / Location: {context['location']}")
-        if context.get("selected_crop"):
-            ctx_lines.append(f"- Context Crop: {context['selected_crop']}")
-        if context.get("output_format") == "spoken_response":
-            ctx_lines.append("- Spoken Voice Output: Keep reply concise, warm, spoken-word friendly (max 2-3 short sentences).")
-        system_prompt += "\n".join(ctx_lines)
-
-    # Configure tools
-    tools = [genai_types.Tool(function_declarations=_TOOL_DECLARATIONS)]
-
-    config = genai_types.GenerateContentConfig(
-        system_instruction=system_prompt,
-        tools=tools,
-        temperature=0.7,
-        max_output_tokens=1024,
-    )
+# NOTE: The actual chat() function is defined below after _generate_with_fallback and _synthesize_local_fallback.
 
 def _generate_with_fallback(
     client: genai.Client,
@@ -594,25 +554,57 @@ def _synthesize_local_fallback(message: str, context: dict[str, Any] | None) -> 
     """Provide a reliable, platform-grounded response if external AI rate limits are exceeded."""
     lower_msg = message.lower()
     state = (context or {}).get("location", "Odisha")
+    user_lang = (context or {}).get("user_language", "")
+    is_odia = user_lang == "odia" or any(
+        word in lower_msg for word in ["mu ", "aau", "kahichi", "karibaku", "dara", "bata", "odisha", "ama", "kana ", "kete", "bhala"]
+    ) or any(ord(c) >= 0x0B00 and ord(c) <= 0x0B7F for c in message)
 
     # Crop price queries
-    for crop in ["tomato", "potato", "onion", "rice", "wheat", "paddy", "brinjal"]:
-        if crop in lower_msg or (crop == "paddy" and "dhan" in lower_msg):
-            res_dict, _ = _execute_tool("get_market_price", {"crop_name": crop.title(), "state": state})
+    for crop in ["tomato", "potato", "onion", "rice", "wheat", "paddy", "brinjal", "dhana", "chaula", "tamato"]:
+        crop_map = {"dhana": "Paddy", "chaula": "Rice", "tamato": "Tomato"}
+        lookup_crop = crop_map.get(crop, crop.title())
+        if crop in lower_msg or (crop == "paddy" and ("dhan" in lower_msg or "dhana" in lower_msg)):
+            res_dict, _ = _execute_tool("get_market_price", {"crop_name": lookup_crop, "state": state})
             price = res_dict.get("predicted_price_inr_per_quintal", "2200")
             price_range = res_dict.get("range", "")
+            if is_odia:
+                return {
+                    "reply": f"ଆଜି {lookup_crop}ର ଆନୁମାନିକ ଦର {state}ରେ ₹{price} ପ୍ରତି କ୍ୱିଣ୍ଟାଲ ({price_range}). AgriDirect AI ମଡ଼େଲ ଦ୍ୱାରା ଗଣନା ହୋଇଛି।",
+                    "action": None,
+                    "suggested_actions": ["ଚାହିଦା ଆନୁମାନ", "କ୍ରେତା ଖୋଜ", "ଆଗକୁ"],
+                }
             return {
-                "reply": f"Namaste! Today's predicted market price for {crop.title()} in {state} is ₹{price} per quintal ({price_range}), benchmarked by AgriDirect's LightGBM prediction engine.",
+                "reply": f"Namaste! Today's predicted market price for {lookup_crop} in {state} is ₹{price} per quintal ({price_range}), benchmarked by AgriDirect's prediction engine.",
                 "action": None,
                 "suggested_actions": ["Forecast demand", "Find buyers", "Back to menu"],
             }
 
+    # Identity query — who are you?
+    if any(w in lower_msg for w in ["who are you", "your name", "tume kie", "tumhe kia", "naam kya", "kana naama", "tumara naam"]):
+        if is_odia:
+            return {
+                "reply": "ମୁଁ ଜାର୍ଭିସ — ଆଗ୍ରୀଡାଇରେକ୍ଟ AI, ମାନୋଜ ବାରିକଙ୍କ ଦ୍ୱାରା ନିର୍ମିତ। ଆପଣଙ୍କ ଫସଲ, ଦର, ଏବଂ ଆବହାୱା ସମ୍ପର୍କୀୟ ସବୁ ସାହାଯ୍ୟ ମୁଁ କରିବି।",
+                "action": None,
+                "suggested_actions": ["ଆଜି ଧାନ ଦର?", "ଆବହାୱା ଖବର", "ବଜାର ଖୋଜ"],
+            }
+        return {
+            "reply": "I am Jarvis — the AgriDirect AI Intelligence Assistant, built by Manoj Barik. I help Indian farmers and buyers with market prices, weather, crop advice, and escrow-protected trade.",
+            "action": None,
+            "suggested_actions": ["Check market price", "Weather advisory", "Open marketplace"],
+        }
+
     # Weather queries
-    if "weather" in lower_msg or "mausam" in lower_msg or "rain" in lower_msg or "barish" in lower_msg:
+    if "weather" in lower_msg or "mausam" in lower_msg or "rain" in lower_msg or "barish" in lower_msg or "abahawa" in lower_msg or "pani" in lower_msg:
         res_dict, _ = _execute_tool("get_weather", {"state": state, "district": "Bhubaneswar"})
         cond = res_dict.get("condition", "Pleasant")
         temp = res_dict.get("temperature_c", "28")
         tip = res_dict.get("farming_tip", "Good day for agricultural field operations.")
+        if is_odia:
+            return {
+                "reply": f"ଭୁବନେଶ୍ୱର, {state}ରେ ଆଜି ପାଣିପାଗ: {temp}°C, {cond}। ଚାଷ ପରାମର୍ଶ: {tip}",
+                "action": None,
+                "suggested_actions": ["ଆଜି ଦର?", "ବଜାର", "ଆଗକୁ"],
+            }
         return {
             "reply": f"Weather for Bhubaneswar, {state}: {temp}°C, {cond}. Agronomic Advisory: {tip}",
             "action": None,
@@ -620,11 +612,17 @@ def _synthesize_local_fallback(message: str, context: dict[str, Any] | None) -> 
         }
 
     # Listing assist
-    if "sell" in lower_msg or "list" in lower_msg or "harvest" in lower_msg:
+    if "sell" in lower_msg or "list" in lower_msg or "harvest" in lower_msg or "becha" in lower_msg or "bikri" in lower_msg:
         _, action = _execute_tool(
             "prepare_listing_action",
             {"crop_name": "Paddy (Rice)", "quantity_kg": 1000, "grade": "Grade A", "price_per_quintal": 2250, "location": state},
         )
+        if is_odia:
+            return {
+                "reply": "ମୁଁ ଆପଣଙ୍କ ଫସଲ AgriDirect ମାର୍କେଟଏ ଲିଷ୍ଟ କରିବାରେ ସାହାଯ୍ୟ କରିବି। ଏଠାରେ ଏକ ପ୍ରି-ଫିଲ୍ ଲିଷ୍ଟିଂ ପ୍ରିଭ୍ୟୁ ଅଛି। ଦୟାକରି ଯାଞ୍ଚ ଓ ନିଶ୍ଚିତ କରନ୍ତୁ।",
+                "action": action,
+                "suggested_actions": ["ଲିଷ୍ଟ ନିଶ୍ଚିତ", "ପରିବର୍ତ୍ତନ", "ଆଗକୁ"],
+            }
         return {
             "reply": "I can help you list your harvest directly on AgriDirect. Here is a pre-filled produce listing preview based on current market benchmarks. Please verify and confirm to publish.",
             "action": action,
@@ -632,11 +630,18 @@ def _synthesize_local_fallback(message: str, context: dict[str, Any] | None) -> 
         }
 
     # General fallback
+    if is_odia:
+        return {
+            "reply": "ନମସ୍କାର! ମୁଁ ଜାର୍ଭିସ, AgriDirect AI। ଆପଣ ଫସଲ ଦର, ଆବହାୱା, ବଜାର ବା ଏସ୍କ୍ରୋ ଟ୍ରେଡ ବିଷୟରେ ପ୍ରଶ୍ନ କରନ୍ତୁ।",
+            "action": None,
+            "suggested_actions": ["ଆଜି ଦର?", "ଆବହାୱା ଖବର", "ବଜାର ଖୋଲ"],
+        }
     return {
-        "reply": "Namaste! I am AgriDirect AI. How can I assist you with your crops, market prices, orders, or logistics today?",
+        "reply": "Namaste! I am Jarvis, your AgriDirect AI built by Manoj Barik. How can I assist you with your crops, market prices, orders, or logistics today?",
         "action": None,
         "suggested_actions": ["Check today's price", "Weather advisory", "Open marketplace"],
     }
+
 
 
 def chat(

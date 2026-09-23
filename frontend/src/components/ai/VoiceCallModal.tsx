@@ -16,6 +16,7 @@ interface VoiceCallModalProps {
 }
 
 const LANGUAGES = [
+  { code: 'or-IN', label: 'Odia (ଓଡ଼ିଆ)' },
   { code: 'hi-IN', label: 'Hindi (हिंदी)' },
   { code: 'en-IN', label: 'Indian English' },
   { code: 'pa-IN', label: 'Punjabi (ਪੰਜਾਬੀ)' },
@@ -35,8 +36,8 @@ function getSpeechRecognition(): SpeechRecognitionType | null {
 export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose }) => {
   const [callStatus, setCallStatus] = useState<'connecting' | 'connected' | 'speaking' | 'listening'>('connecting')
   const [isMuted, setIsMuted] = useState(false)
-  const [selectedLang, setSelectedLang] = useState('hi-IN')
-  const [transcript, setTranscript] = useState<string>('Connecting to AgriDirect AI Voice Hotline...')
+  const [selectedLang, setSelectedLang] = useState('or-IN')
+  const [transcript, setTranscript] = useState<string>('AgriDirect Jarvis ସହ ସଂଯୋଗ ହେଉଛି...')
   const [seconds, setSeconds] = useState(0)
   const conversationRef = useRef<AssistantHistoryItem[]>([])
   const recognitionRef = useRef<ReturnType<typeof Object.create> | null>(null)
@@ -72,22 +73,35 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
     const connectTimeout = setTimeout(() => {
       setCallStatus('speaking')
       const welcomeText =
-        selectedLang.startsWith('hi')
-          ? 'नमस्ते किसान साथी! एग्रीडायरेक्ट AI वॉयस हेल्पलाइन में आपका स्वागत है। आप अपनी फसल, कीट नियंत्रण या बाज़ार भाव के बारे में पूछ सकते हैं।'
-          : 'Namaste farmer! Welcome to AgriDirect AI Voice Hotline. How can I assist you with your crops or livestock today?'
+        selectedLang.startsWith('or')
+          ? 'ନମସ୍କାର ଚାଷୀ ବନ୍ଧୁ! ମୁଁ ଜାର୍ଭିସ, ଆଗ୍ରୀଡାଇରେକ୍ଟ AI। ଆପଣ ଆପଣଙ୍କ ଫସଲ, ଦର, ଏବଂ ଆବହାୱା ବିଷୟରେ ପ୍ରଶ୍ନ କରନ୍ତୁ।'
+          : selectedLang.startsWith('hi')
+          ? 'नमस्ते किसान साथी! मैं जार्विस हूँ, AgriDirect AI असिस्टेंट। आप अपनी फसल, मंडी भाव या मौसम के बारे में पूछ सकते हैं।'
+          : 'Namaste farmer! I am Jarvis, your AgriDirect AI Assistant built by Manoj Barik. Ask me about your crops, mandi rates, or weather advisory today.'
       setTranscript(welcomeText)
 
-      // Speak the welcome using browser TTS
+      // Speak the welcome using browser TTS with best available Indian voice
       if ('speechSynthesis' in window) {
         try {
+          window.speechSynthesis.cancel()
           const utterance = new SpeechSynthesisUtterance(welcomeText)
           utterance.lang = selectedLang
+          utterance.rate = 0.92
+          utterance.pitch = 1.05
+          // Find best available voice for the selected language
+          const voices = window.speechSynthesis.getVoices()
+          const bestVoice = voices.find(
+            (v) => v.lang.startsWith(selectedLang.slice(0, 2)) && (v.name.toLowerCase().includes('google') || v.name.toLowerCase().includes('natural'))
+          ) || voices.find((v) => v.lang.startsWith(selectedLang.slice(0, 2)))
+          if (bestVoice) utterance.voice = bestVoice
           utterance.onend = () => {
             setCallStatus('listening')
             setTranscript(
-              selectedLang.startsWith('hi')
-                ? 'सुन रहा हूँ... बोलिए (उदाहरण: टमाटर में कीड़ा लगा है या गेहूँ का भाव क्या है?)'
-                : 'Listening... (Speak your question, e.g. What is the current wheat price or tomato treatment?)'
+              selectedLang.startsWith('or')
+                ? "ଶୁଣୁଛି... ଆପଣ କ'ଣ ଜାଣିବାକୁ ଚାହୁଁଛନ୍ତି? (ଉଦ: ଧାନ ଦର, ଆବହାୱା ଖବର)"
+                : selectedLang.startsWith('hi')
+                ? 'सुन रहा हूँ... बोलिए (उदाहरण: टमाटर में कीड़ा या गेहूँ का भाव)'
+                : 'Listening... Speak your question (e.g. What is the current wheat price or tomato disease treatment?)'
             )
             startListening()
           }
@@ -168,12 +182,18 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
       const response = await assistantVoice({
         message: question,
         conversation_history: conversationRef.current.slice(-10),
-        context: {},
+        context: {
+          output_format: 'spoken_response',
+          language: selectedLang,
+          user_language: selectedLang.startsWith('or') ? 'odia' : selectedLang.startsWith('hi') ? 'hindi' : 'english',
+        },
       })
       aiReply = response.data.reply
     } catch {
       // Fallback for voice
-      aiReply = selectedLang.startsWith('hi')
+      aiReply = selectedLang.startsWith('or')
+        ? 'ମାଫ କରନ୍ତୁ, AI ସେବା ବର୍ତ୍ତମାନ ଉପଲବ୍ଧ ନୁହଁ। ଟିକେ ପରେ ଚେଷ୍ଟା କରନ୍ତୁ।'
+        : selectedLang.startsWith('hi')
         ? 'माफ़ करें, AI सेवा अभी उपलब्ध नहीं है। कृपया बाद में प्रयास करें।'
         : 'Sorry, AI service is currently unavailable. Please try again later.'
     }
@@ -288,24 +308,49 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => handleSimulateQuestion("What is today's wheat rate in Punjab?")}
+              onClick={() => handleSimulateQuestion(
+                selectedLang.startsWith('or')
+                  ? 'ଆଜି ଧାନ ଏବଂ ଚାଉଳ ଦର କେତେ?'
+                  : selectedLang.startsWith('hi')
+                  ? 'आज पंजाब में गेहूँ का मंडी भाव क्या है?'
+                  : "What is today's wheat rate in Punjab?"
+              )}
               className="text-xs px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-emerald-500 text-slate-300 transition-colors"
             >
-              🌾 Wheat Mandi Rate
+              🌾 {selectedLang.startsWith('or') ? 'ଧାନ ଦର' : selectedLang.startsWith('hi') ? 'गेहूँ मंडी' : 'Wheat Mandi Rate'}
             </button>
             <button
               type="button"
-              onClick={() => handleSimulateQuestion('How to prevent fungus in tomato leaves?')}
+              onClick={() => handleSimulateQuestion(
+                selectedLang.startsWith('or')
+                  ? "ଟମାଟୋ ପତ୍ରରେ ରୋଗ ଲାଗିଛି, ଚିକିତ୍ସା କ'ଣ?"
+                  : 'How to prevent fungus in tomato leaves?'
+              )}
               className="text-xs px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-emerald-500 text-slate-300 transition-colors"
             >
-              🍅 Tomato Fungus Care
+              🍅 {selectedLang.startsWith('or') ? 'ଟମାଟୋ ରୋଗ' : 'Tomato Fungus Care'}
             </button>
             <button
               type="button"
-              onClick={() => handleSimulateQuestion('When will it rain in Bhubaneswar, Odisha?')}
+              onClick={() => handleSimulateQuestion(
+                selectedLang.startsWith('or')
+                  ? "ଭୁବନେଶ୍ୱରରେ ଆଜି ଆବହାୱା କ'ଣ?"
+                  : 'When will it rain in Bhubaneswar, Odisha?'
+              )}
               className="text-xs px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-emerald-500 text-slate-300 transition-colors"
             >
-              🌧️ Rain Forecast
+              🌧️ {selectedLang.startsWith('or') ? 'ଆବହାୱା ଖବର' : 'Rain Forecast'}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSimulateQuestion(
+                selectedLang.startsWith('or')
+                  ? "ତୁମେ କିଏ? ତୁମ ନାଁ କ'ଣ?"
+                  : 'Who are you? What is your name?'
+              )}
+              className="text-xs px-3 py-1.5 rounded-xl bg-slate-900 border border-emerald-700/60 hover:border-emerald-500 text-emerald-300 transition-colors"
+            >
+              🤖 {selectedLang.startsWith('or') ? 'ଜାର୍ଭିସ ପରିଚୟ' : 'Meet Jarvis'}
             </button>
           </div>
         </div>

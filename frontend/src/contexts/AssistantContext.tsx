@@ -215,7 +215,7 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>({
     enabled: true,
     voiceName: 'Kore',
-    language: 'hi-IN',
+    language: 'or-IN',
   })
   const [transcript, setTranscript] = useState('')
   const recognitionRef = useRef<any>(null)

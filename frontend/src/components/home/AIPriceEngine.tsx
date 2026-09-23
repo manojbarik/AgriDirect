@@ -248,26 +248,40 @@ export function AIPriceEngine() {
                   Dynamic price index modeled against regional arrivals, rainfall forecasts, and wholesale demand.
                 </p>
               </div>
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                +4.2% Bullish Momentum
-              </span>
+              {(() => {
+                // Dynamic momentum based on price position within range
+                const spread = max - min
+                const positionInRange = spread > 0 ? (predicted - min) / spread : 0.5
+                const momentumPct = ((positionInRange - 0.5) * 8).toFixed(1)
+                const isBullish = positionInRange > 0.5
+                return (
+                  <span className={`text-xs font-bold px-3 py-1 rounded-full border ${isBullish ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>
+                    {isBullish ? `+${momentumPct}% Bullish` : `${momentumPct}% Bearish`} Momentum
+                  </span>
+                )
+              })()}
             </div>
 
             <div className="grid grid-cols-7 gap-2 sm:gap-3 text-center">
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => {
-                const dayOffset = (idx - 3) * 0.45
-                const dayPrice = Math.max(min, predicted + dayOffset)
-                const heightPct = Math.min(100, Math.max(30, 45 + idx * 7))
+                // Realistic variance using sine pattern + slight uptrend
+                const sineVariance = Math.sin((idx / 6) * Math.PI) * (max - min) * 0.18
+                const trendBias = (idx - 3) * (max - min) * 0.03
+                const dayPrice = Math.max(min, Math.min(max, predicted + sineVariance + trendBias))
+                // Bar height: normalize between 20% and 95% based on position in range
+                const spread = max > min ? max - min : 1
+                const heightPct = Math.round(20 + ((dayPrice - min) / spread) * 75)
+                const isToday = idx === 3
                 return (
-                  <div key={day} className="flex flex-col items-center gap-2 p-2 sm:p-3 rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 hover:border-emerald-500 transition-all">
-                    <span className="text-[11px] font-bold text-slate-400 uppercase">{day}</span>
+                  <div key={day} className={`flex flex-col items-center gap-2 p-2 sm:p-3 rounded-2xl border transition-all ${isToday ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400/60' : 'bg-white dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80 hover:border-emerald-500'}`}>
+                    <span className={`text-[11px] font-bold uppercase ${isToday ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>{isToday ? 'TODAY' : day}</span>
                     <div className="w-full bg-slate-100 dark:bg-slate-700/60 rounded-full h-16 sm:h-20 flex items-end justify-center p-1">
                       <div
-                        className="w-full bg-gradient-to-t from-emerald-600 to-teal-400 rounded-full transition-all"
+                        className={`w-full rounded-full transition-all ${isToday ? 'bg-gradient-to-t from-emerald-600 to-emerald-400' : 'bg-gradient-to-t from-emerald-700/80 to-teal-400/70'}`}
                         style={{ height: `${heightPct}%` }}
                       />
                     </div>
-                    <span className="text-xs sm:text-sm font-mono font-bold text-slate-900 dark:text-white">
+                    <span className={`text-xs sm:text-sm font-mono font-bold ${isToday ? 'text-emerald-600 dark:text-emerald-300' : 'text-slate-900 dark:text-white'}`}>
                       ₹{dayPrice.toFixed(1)}
                     </span>
                   </div>
