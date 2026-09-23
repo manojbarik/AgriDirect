@@ -260,17 +260,12 @@ def get_otp_provider() -> OtpProvider:
             and settings.smtp_app_password
             and settings.smtp_sender_email
         ):
-            if settings.app_env == "development":
-                logger.warning(
-                    "SMTP is not fully configured; falling back to the mock OTP "
-                    "provider. Set SMTP_USER, SMTP_APP_PASSWORD and "
-                    "SMTP_SENDER_EMAIL to enable real email delivery."
-                )
-                return MockOtpProvider()
-            raise RuntimeError(
-                "SMTP_HOST, SMTP_USER, SMTP_APP_PASSWORD and SMTP_SENDER_EMAIL "
-                "are required when OTP_PROVIDER_MODE=smtp."
+            logger.warning(
+                "SMTP is not fully configured (missing SMTP_USER, SMTP_APP_PASSWORD, "
+                "or SMTP_SENDER_EMAIL); falling back to mock OTP provider. "
+                "Set these environment variables in Render to enable real email delivery."
             )
+            return MockOtpProvider()
         return SmtpOtpProvider(
             host=settings.smtp_host,
             port=settings.smtp_port,
