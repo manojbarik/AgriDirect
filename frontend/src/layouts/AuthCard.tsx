@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Sprout } from 'lucide-react'
+import { Sprout, ArrowLeft } from 'lucide-react'
 import { AgricultureEnvironment } from '../components/scene/AgricultureEnvironment'
 import { getRealWorldTimeOfDay } from '../utils/timeOfDay'
 import { LanguageSwitcher } from '../components/layout/LanguageSwitcher'
@@ -10,12 +10,36 @@ interface AuthCardProps {
   subtitle?: ReactNode
   children: ReactNode
   maxWidth?: 'md' | 'xl'
+  backTo?: string
+  backLabel?: string
+  showBackButton?: boolean
 }
 
-export function AuthCard({ title, subtitle, children, maxWidth = 'md' }: AuthCardProps) {
+export function AuthCard({
+  title,
+  subtitle,
+  children,
+  maxWidth = 'md',
+  backTo = '/',
+  backLabel = 'Back to Website',
+  showBackButton = true,
+}: AuthCardProps) {
   return (
     <AgricultureEnvironment variant="auth" timeOfDay={getRealWorldTimeOfDay()} showFarmer={false}>
       <div className="min-h-screen flex items-center justify-center px-4 py-12 relative z-20 font-sans">
+        {showBackButton && (
+          <div className="absolute top-4 left-4 z-10">
+            <Link
+              to={backTo}
+              aria-label={backLabel}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-300 bg-slate-900/80 hover:bg-slate-800 hover:text-white border border-slate-700/80 shadow-lg backdrop-blur-md transition-all group"
+            >
+              <ArrowLeft className="w-4 h-4 text-emerald-400 group-hover:-translate-x-0.5 transition-transform" />
+              <span className="hidden sm:inline">{backLabel}</span>
+              <span className="sm:hidden">Back</span>
+            </Link>
+          </div>
+        )}
         <div className="absolute top-4 right-4 z-10">
           <LanguageSwitcher />
         </div>

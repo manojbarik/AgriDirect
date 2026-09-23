@@ -65,27 +65,27 @@ export function AIPriceEngine() {
   const confPct = prediction ? Math.round(prediction.confidence_score * 100) : 0
 
   return (
-    <section className="rounded-[36px] bg-white dark:bg-[#0a1610] border-2 border-slate-200 dark:border-emerald-500/30 p-7 sm:p-10 md:p-14 shadow-2xl font-sans ring-1 ring-emerald-500/15">
+    <section className="rounded-[28px] sm:rounded-[36px] bg-white dark:bg-[#0a1610] border-2 border-slate-200 dark:border-emerald-500/30 p-4 sm:p-8 md:p-12 shadow-2xl font-sans ring-1 ring-emerald-500/15">
       {/* Section Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-10 pb-6 border-b border-slate-200/80 dark:border-slate-800">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8 sm:mb-10 pb-6 border-b border-slate-200/80 dark:border-slate-800">
         <div>
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-3">
-            <Cpu className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[11px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-3">
+            <Cpu className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>AI Predictive Intelligence Engine</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
             Live Mandi{' '}
             <span className="text-emerald-600 dark:text-emerald-400">
               Price Forecasts
             </span>
           </h2>
-          <p className="mt-2 text-base text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
+          <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
             Real-time neural network rate prediction evaluated across 1,800+ APMC mandis to guarantee maximum grower profitability before harvest.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="px-4 py-2 rounded-full bg-emerald-500/10 dark:bg-emerald-950/60 text-xs font-bold text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-2">
+          <span className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-500/10 dark:bg-emerald-950/60 text-xs font-bold text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             Live Mandi Telemetry Active
           </span>
@@ -93,16 +93,16 @@ export function AIPriceEngine() {
       </div>
 
       {/* Query Controls Form - Big Size */}
-      <form onSubmit={handlePredict} className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+      <form onSubmit={handlePredict} className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5 mb-8 sm:mb-10">
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2.5 flex items-center gap-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2 sm:mb-2.5 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-emerald-500" />
             <span>Crop Variety</span>
           </label>
           <select
             value={crop}
             onChange={(event) => setCrop(event.target.value)}
-            className="w-full h-14 rounded-2xl px-5 text-base font-semibold bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition font-sans shadow-sm"
+            className="w-full h-12 sm:h-14 rounded-2xl px-4 sm:px-5 text-sm sm:text-base font-semibold bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition font-sans shadow-sm"
             disabled={crops.length === 0}
           >
             <option value="" className="text-slate-500">
@@ -117,14 +117,14 @@ export function AIPriceEngine() {
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2.5 flex items-center gap-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2 sm:mb-2.5 flex items-center gap-2">
             <MapPin className="w-4 h-4 text-emerald-500" />
             <span>State (Optional)</span>
           </label>
           <select
             value={state}
             onChange={(event) => setState(event.target.value)}
-            className="w-full h-14 rounded-2xl px-5 text-base font-semibold bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition font-sans shadow-sm"
+            className="w-full h-12 sm:h-14 rounded-2xl px-4 sm:px-5 text-sm sm:text-base font-semibold bg-slate-50 dark:bg-slate-800/90 border-2 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition font-sans shadow-sm"
           >
             <option value="">
               All India (National Mandis)
@@ -141,7 +141,7 @@ export function AIPriceEngine() {
           <button
             type="submit"
             disabled={loading || !crop}
-            className="w-full h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-black text-base shadow-lg shadow-emerald-950/40 hover:shadow-xl hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 hover:scale-[1.01]"
+            className="w-full h-12 sm:h-14 rounded-2xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-black text-sm sm:text-base shadow-lg shadow-emerald-950/40 hover:shadow-xl hover:shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 sm:gap-2.5 cursor-pointer disabled:opacity-50 hover:scale-[1.01]"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <TrendingUp className="w-5 h-5" />}
             <span>{loading ? 'Analyzing APMC Data…' : 'Generate Real-Time Forecast'}</span>
@@ -150,17 +150,17 @@ export function AIPriceEngine() {
       </form>
 
       {error && (
-        <div className="mb-8 rounded-2xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-5 text-sm text-rose-800 dark:text-rose-300 font-medium">
+        <div className="mb-8 rounded-2xl border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/40 p-4 sm:p-5 text-sm text-rose-800 dark:text-rose-300 font-medium">
           {error}
         </div>
       )}
 
       {/* 3-Column Structured Grand Metric Showcase */}
       {prediction && !error && (
-        <div className="space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-6 sm:space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             {/* KPI 1: Predicted Rate - Big Display */}
-            <div className="p-7 sm:p-8 rounded-3xl bg-slate-50 dark:bg-[#11221a] border-2 border-slate-200/90 dark:border-emerald-500/25 shadow-md flex flex-col justify-between">
+            <div className="p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl bg-slate-50 dark:bg-[#11221a] border-2 border-slate-200/90 dark:border-emerald-500/25 shadow-md flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-3">
                   <span>PREDICTED MANDI PRICE</span>
@@ -168,40 +168,40 @@ export function AIPriceEngine() {
                     {prediction.crop_name.toUpperCase()}
                   </span>
                 </div>
-                <div className="text-5xl sm:text-6xl md:text-7xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight mt-2">
+                <div className="text-3xl sm:text-5xl md:text-7xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight mt-2">
                   ₹{Number(prediction.predicted_price).toFixed(2)}
                 </div>
-                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 font-sans block mt-1">
+                <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 font-sans block mt-1">
                   per {prediction.unit} (Net Mandi Settlement)
                 </span>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700/80 flex flex-wrap gap-2 text-xs">
-                <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold text-[11px] border border-emerald-500/30">
+              <div className="mt-5 sm:mt-6 pt-4 border-t border-slate-200 dark:border-slate-700/80 flex flex-wrap gap-2 text-xs">
+                <span className="px-2.5 sm:px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] sm:text-[11px] border border-emerald-500/30">
                   AI Mandi Neural Engine v2.4
                 </span>
-                <span className="px-3 py-1 rounded-full bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 font-bold text-[11px] border border-cyan-500/30">
+                <span className="px-2.5 sm:px-3 py-1 rounded-full bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 font-bold text-[10px] sm:text-[11px] border border-cyan-500/30">
                   Live Mandi Verified
                 </span>
               </div>
             </div>
 
             {/* KPI 2: AI Confidence Gauge - Big Display */}
-            <div className="p-7 sm:p-8 rounded-3xl bg-slate-50 dark:bg-[#11221a] border-2 border-slate-200/90 dark:border-emerald-500/25 shadow-md flex flex-col justify-between">
+            <div className="p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl bg-slate-50 dark:bg-[#11221a] border-2 border-slate-200/90 dark:border-emerald-500/25 shadow-md flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-3">
                   <span>PREDICTION CONFIDENCE</span>
                   <ShieldCheck className="w-5 h-5 text-emerald-500" />
                 </div>
-                <div className="text-5xl sm:text-6xl md:text-7xl font-black text-teal-600 dark:text-teal-400 font-sans tracking-tight mt-2">
+                <div className="text-3xl sm:text-5xl md:text-7xl font-black text-teal-600 dark:text-teal-400 font-sans tracking-tight mt-2">
                   {confPct}%
                 </div>
-                <span className="text-sm font-semibold text-teal-600 dark:text-teal-300 font-sans block mt-1">
+                <span className="text-xs sm:text-sm font-semibold text-teal-600 dark:text-teal-300 font-sans block mt-1">
                   High Statistical Reliability
                 </span>
               </div>
 
-              <div className="mt-6 space-y-2.5">
+              <div className="mt-5 sm:mt-6 space-y-2.5">
                 <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden shadow-inner">
                   <div
                     className="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 h-3 rounded-full transition-all duration-700 shadow-sm"
@@ -215,36 +215,36 @@ export function AIPriceEngine() {
             </div>
 
             {/* KPI 3: Expected Mandi Window & Range - Big Display */}
-            <div className="p-7 sm:p-8 rounded-3xl bg-slate-50 dark:bg-[#11221a] border-2 border-slate-200/90 dark:border-emerald-500/25 shadow-md flex flex-col justify-between">
+            <div className="p-5 sm:p-7 md:p-8 rounded-2xl sm:rounded-3xl bg-slate-50 dark:bg-[#11221a] border-2 border-slate-200/90 dark:border-emerald-500/25 shadow-md flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-3">
                   <span>EXPECTED MANDI RANGE</span>
                   <BarChart3 className="w-5 h-5 text-slate-400" />
                 </div>
-                <div className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 dark:text-white font-mono tracking-tight mt-2">
+                <div className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white font-mono tracking-tight mt-2 break-words">
                   ₹{Number(prediction.price_range_min).toFixed(2)} – ₹{Number(prediction.price_range_max).toFixed(2)}
                 </div>
-                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 font-sans block mt-1">
+                <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 font-sans block mt-1">
                   Spread: ₹{(max - min).toFixed(2)} / {prediction.unit}
                 </span>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <div className="mt-5 sm:mt-6 pt-4 border-t border-slate-200 dark:border-slate-700/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                 <span className="font-semibold text-slate-700 dark:text-slate-300">Dispatch Recommendation:</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">3–5 Days</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">3–5 Days</span>
               </div>
             </div>
           </div>
 
           {/* Interactive 7-Day APMC Market Rate Forecast Trend Visualizer */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-slate-50/80 dark:bg-[#0e1d16] border border-slate-200 dark:border-emerald-500/20">
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl bg-slate-50/80 dark:bg-[#0e1d16] border border-slate-200 dark:border-emerald-500/20">
+            <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 mb-5 sm:mb-6">
               <div>
-                <h4 className="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                <h4 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-emerald-500" />
                   <span>7-Day APMC Projected Rate Trajectory</span>
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   Dynamic price index modeled against regional arrivals, rainfall forecasts, and wholesale demand.
                 </p>
               </div>
@@ -255,14 +255,14 @@ export function AIPriceEngine() {
                 const momentumPct = ((positionInRange - 0.5) * 8).toFixed(1)
                 const isBullish = positionInRange > 0.5
                 return (
-                  <span className={`text-xs font-bold px-3 py-1 rounded-full border ${isBullish ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>
+                  <span className={`text-[11px] sm:text-xs font-bold px-2.5 sm:px-3 py-1 rounded-full border ${isBullish ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20'}`}>
                     {isBullish ? `+${momentumPct}% Bullish` : `${momentumPct}% Bearish`} Momentum
                   </span>
                 )
               })()}
             </div>
 
-            <div className="grid grid-cols-7 gap-2 sm:gap-3 text-center">
+            <div className="grid grid-cols-7 gap-1 sm:gap-2 md:gap-3 text-center">
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => {
                 // Realistic variance using sine pattern + slight uptrend
                 const sineVariance = Math.sin((idx / 6) * Math.PI) * (max - min) * 0.18
@@ -273,15 +273,15 @@ export function AIPriceEngine() {
                 const heightPct = Math.round(20 + ((dayPrice - min) / spread) * 75)
                 const isToday = idx === 3
                 return (
-                  <div key={day} className={`flex flex-col items-center gap-2 p-2 sm:p-3 rounded-2xl border transition-all ${isToday ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400/60' : 'bg-white dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80 hover:border-emerald-500'}`}>
-                    <span className={`text-[11px] font-bold uppercase ${isToday ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>{isToday ? 'TODAY' : day}</span>
-                    <div className="w-full bg-slate-100 dark:bg-slate-700/60 rounded-full h-16 sm:h-20 flex items-end justify-center p-1">
+                  <div key={day} className={`flex flex-col items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 md:p-3 rounded-xl sm:rounded-2xl border transition-all ${isToday ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-400/60' : 'bg-white dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/80 hover:border-emerald-500'}`}>
+                    <span className={`text-[10px] sm:text-[11px] font-bold uppercase ${isToday ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}`}>{isToday ? 'TODAY' : day}</span>
+                    <div className="w-full bg-slate-100 dark:bg-slate-700/60 rounded-full h-12 sm:h-16 md:h-20 flex items-end justify-center p-0.5 sm:p-1">
                       <div
                         className={`w-full rounded-full transition-all ${isToday ? 'bg-gradient-to-t from-emerald-600 to-emerald-400' : 'bg-gradient-to-t from-emerald-700/80 to-teal-400/70'}`}
                         style={{ height: `${heightPct}%` }}
                       />
                     </div>
-                    <span className={`text-xs sm:text-sm font-mono font-bold ${isToday ? 'text-emerald-600 dark:text-emerald-300' : 'text-slate-900 dark:text-white'}`}>
+                    <span className={`text-[10px] sm:text-xs md:text-sm font-mono font-bold truncate max-w-full ${isToday ? 'text-emerald-600 dark:text-emerald-300' : 'text-slate-900 dark:text-white'}`}>
                       ₹{dayPrice.toFixed(1)}
                     </span>
                   </div>

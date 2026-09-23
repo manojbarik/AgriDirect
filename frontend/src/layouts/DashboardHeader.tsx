@@ -87,18 +87,22 @@ export function DashboardHeader({ role, onOpenMobileDrawer }: DashboardHeaderPro
         )}
 
         {/* Clean Breadcrumb Trail */}
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 min-w-0 text-xs">
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 sm:gap-2 min-w-0 text-xs">
           <Link
             to={homePath}
             aria-label="Dashboard home"
-            className="p-1 rounded-lg text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+            className="p-1 rounded-lg text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex-shrink-0"
           >
             <Home className="w-3.5 h-3.5" />
           </Link>
           {crumbs.map((crumb, index) => {
             const isLast = index === crumbs.length - 1
+            const isIntermediate = !isLast && index > 0
             return (
-              <span key={`${crumb.label}-${index}`} className="flex items-center gap-1.5 min-w-0">
+              <span
+                key={`${crumb.label}-${index}`}
+                className={`${isIntermediate ? 'hidden sm:flex' : 'flex'} items-center gap-1.5 min-w-0`}
+              >
                 <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-emerald-500/40 flex-shrink-0" />
                 {crumb.to && !isLast ? (
                   <Link
@@ -109,7 +113,7 @@ export function DashboardHeader({ role, onOpenMobileDrawer }: DashboardHeaderPro
                   </Link>
                 ) : (
                   <span
-                    className="text-slate-900 dark:text-white font-bold truncate"
+                    className="text-slate-900 dark:text-white font-bold truncate max-w-[140px] sm:max-w-none"
                     aria-current={isLast ? 'page' : undefined}
                   >
                     {crumb.label}
@@ -136,7 +140,7 @@ export function DashboardHeader({ role, onOpenMobileDrawer }: DashboardHeaderPro
       </form>
 
       {/* Right Actions */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
         {/* Language Switcher */}
         <div className="relative">
           <button

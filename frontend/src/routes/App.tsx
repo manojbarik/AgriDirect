@@ -115,32 +115,32 @@ function HomePage() {
 
   const activeTimeOfDay = timeMode === 'auto' ? currentTime : timeMode
 
-  return (
+    return (
     <>
       <AgricultureEnvironment variant="hero" timeOfDay={activeTimeOfDay} showFarmer={true}>
         {/* Top Navbar matching showcase */}
-        <header className="w-full px-4 sm:px-8 py-4 flex items-center justify-between z-30 font-sans">
+        <header className="w-full px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between z-30 font-sans gap-2">
           {/* Brand Logo & Tag */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 shadow-lg shadow-black/40 group-hover:scale-105 transition-transform">
-              <Sprout className="w-5 h-5 text-emerald-400" />
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 group flex-shrink-0">
+            <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-2xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 shadow-lg shadow-black/40 group-hover:scale-105 transition-transform">
+              <Sprout className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-black tracking-tight text-white">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-base sm:text-lg font-black tracking-tight text-white">
                   Agri<span className="text-emerald-400">Direct</span>
                 </span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-300">
+                <span className="hidden sm:inline-block text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-300">
                   DIRECT AGRICULTURE
                 </span>
               </div>
-              <p className="text-[11px] text-emerald-200/70 font-medium">
+              <p className="hidden sm:block text-[11px] text-emerald-200/70 font-medium">
                 Direct Farmer-to-Buyer Ecosystem
               </p>
             </div>
           </Link>
 
-          {/* Inline Navigation Links */}
+          {/* Inline Navigation Links — desktop only */}
           <nav className="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-300">
             <Link to="/marketplace" className="hover:text-emerald-400 transition-colors">
               Marketplace
@@ -153,24 +153,27 @@ function HomePage() {
             </a>
           </nav>
 
-          {/* Right Header Controls: Dawn/Day/Twilight + AgriDirect AI + Sign In */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            {/* Dynamic Time Mode Selector Pill */}
-            <div className="flex items-center gap-1 bg-black/60 backdrop-blur-xl p-1 rounded-full border border-white/15 text-xs text-neutral-200 shadow-xl">
+          {/* Right Header Controls */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 flex-shrink-0">
+            {/* Dynamic Time Mode Selector Pill
+                — 2 buttons (Day / Night) on mobile, all 4 on sm+ */}
+            <div className="flex items-center gap-0.5 sm:gap-1 bg-black/60 backdrop-blur-xl p-1 rounded-full border border-white/15 text-xs text-neutral-200 shadow-xl">
+              {/* Day — always shown */}
               <button
                 onClick={() => setTimeMode('day')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
+                className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
                   activeTimeOfDay === 'day'
                     ? 'bg-amber-400 text-stone-950 font-bold shadow-md'
                     : 'hover:text-white text-neutral-400'
                 }`}
                 title="Radiant Day Sun"
               >
-                ☀️ Day
+                ☀️<span className="hidden sm:inline"> Day</span>
               </button>
+              {/* Dawn — hidden on phones */}
               <button
                 onClick={() => setTimeMode('golden')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
+                className={`hidden sm:block px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
                   activeTimeOfDay === 'golden'
                     ? 'bg-amber-500 text-stone-950 font-bold shadow-md'
                     : 'hover:text-white text-neutral-400'
@@ -179,20 +182,22 @@ function HomePage() {
               >
                 🌾 Dawn
               </button>
+              {/* Night — always shown */}
               <button
                 onClick={() => setTimeMode('night')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
+                className={`px-2 sm:px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
                   activeTimeOfDay === 'night'
                     ? 'bg-indigo-500 text-white font-bold shadow-md'
                     : 'hover:text-white text-neutral-400'
                 }`}
                 title="Starlit Night & Moon"
               >
-                🌙 Night
+                🌙<span className="hidden sm:inline"> Night</span>
               </button>
+              {/* Sunset — hidden on phones */}
               <button
                 onClick={() => setTimeMode('twilight')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
+                className={`hidden sm:block px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
                   activeTimeOfDay === 'twilight'
                     ? 'bg-rose-600 text-white font-bold shadow-md'
                     : 'hover:text-white text-neutral-400'
@@ -203,28 +208,28 @@ function HomePage() {
               </button>
             </div>
 
-            {/* AgriDirect AI Button */}
+            {/* AgriDirect AI Button — icon-only on phones */}
             <button
               onClick={() => openAssistant()}
-              className="px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 border border-emerald-500/30 text-emerald-300 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+              className="px-2 sm:px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/80 border border-emerald-500/30 text-emerald-300 hover:text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
               title="Open AgriDirect AI Assistant"
             >
               <Bot className="w-4 h-4 text-amber-300" />
-              <span>AgriDirect AI</span>
+              <span className="hidden sm:inline">AgriDirect AI</span>
             </button>
 
             {/* Sign in / Dashboard Button */}
             {user ? (
               <Link
                 to={dashboardPath(user.role)}
-                className="rounded-full bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-all"
+                className="rounded-full bg-emerald-600 hover:bg-emerald-500 px-3 sm:px-4 py-1.5 text-xs font-bold text-white shadow-sm transition-all whitespace-nowrap"
               >
-                {user.role} Dashboard
+                <span className="hidden sm:inline">{user.role} </span>Dashboard
               </Link>
             ) : (
               <Link
                 to="/login"
-                className="rounded-full bg-black/60 hover:bg-white/10 backdrop-blur-md px-4 py-1.5 text-xs font-bold text-white border border-white/15 transition-all"
+                className="rounded-full bg-black/60 hover:bg-white/10 backdrop-blur-md px-3 sm:px-4 py-1.5 text-xs font-bold text-white border border-white/15 transition-all whitespace-nowrap"
               >
                 Sign in
               </Link>

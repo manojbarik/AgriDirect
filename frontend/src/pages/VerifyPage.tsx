@@ -20,8 +20,6 @@ export default function VerifyPage() {
   const [countdown, setCountdown] = useState(30)
   const [expired, setExpired] = useState(false)
   const inputRefs = useRef<Array<HTMLInputElement | null>>([])
-
-  const isDev = import.meta.env.MODE === 'development'
   const code = otp.join('')
 
   useEffect(() => {
@@ -75,14 +73,6 @@ export default function VerifyPage() {
     focusIndex(Math.min(digits.length, OTP_LENGTH - 1))
   }
 
-  const handleAutoFill = () => {
-    const mock = pendingChallenge.mock_code
-    if (!mock) return
-    const digits = mock.replace(/\D/g, '').slice(0, OTP_LENGTH)
-    setOtp(Array.from({ length: OTP_LENGTH }, (_, i) => digits[i] ?? ''))
-    focusIndex(OTP_LENGTH - 1)
-  }
-
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     setError(null)
@@ -123,25 +113,12 @@ export default function VerifyPage() {
         </>
       }
     >
-      {pendingChallenge.mock_code && (
-              <div className="rounded-xl bg-amber-950/50 border border-amber-400/40 p-3 text-xs text-amber-200 flex items-center justify-between">
-                <span>Verification Code:</span>
-                <button
-                  type="button"
-                  onClick={handleAutoFill}
-                  className="font-bold text-amber-300 px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-400/30 hover:bg-amber-500/30 transition-colors"
-                >
-                  {pendingChallenge.mock_code} (Auto-Fill)
-                </button>
-              </div>
-            )}
-
-            {resendSuccess && (
-              <div className="rounded-xl bg-emerald-950/50 border border-emerald-400/40 p-3 text-xs text-emerald-300 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>A new verification code has been dispatched to your email.</span>
-              </div>
-            )}
+      {resendSuccess && (
+        <div className="rounded-xl bg-emerald-950/50 border border-emerald-400/40 p-3 text-xs text-emerald-300 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>A new verification code has been dispatched to your email.</span>
+        </div>
+      )}
 
             {expired && (
               <div className="rounded-xl bg-rose-950/50 border border-rose-500/40 p-3 text-xs text-rose-200 flex items-center gap-2">

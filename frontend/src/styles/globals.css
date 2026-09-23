@@ -17,6 +17,8 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* prevent horizontal scroll caused by any overflowing child */
+  overflow-x: hidden;
 }
 
 body {
@@ -26,12 +28,19 @@ body {
   color: var(--text-primary);
   background-color: var(--surface-page);
   min-height: 100vh;
+  overflow-x: hidden;
+  /* respect iOS notch / Android safe areas */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  /* remove tap highlight on mobile */
+  -webkit-tap-highlight-color: transparent;
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 /* ===== TYPOGRAPHY ===== */
@@ -41,12 +50,18 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary);
 }
 
-h1 { font-size: var(--font-size-5xl); }
-h2 { font-size: var(--font-size-4xl); }
-h3 { font-size: var(--font-size-3xl); }
-h4 { font-size: var(--font-size-2xl); }
-h5 { font-size: var(--font-size-xl); }
-h6 { font-size: var(--font-size-lg); }
+/*
+  Fluid type scale: clamp(min, preferred, max)
+  min  = comfortable phone size
+  pref = viewport-relative growth
+  max  = desktop cap
+*/
+h1 { font-size: clamp(1.75rem, 5vw, 3rem); }
+h2 { font-size: clamp(1.5rem,  4vw, 2.25rem); }
+h3 { font-size: clamp(1.25rem, 3.5vw, 1.875rem); }
+h4 { font-size: clamp(1.125rem, 3vw, 1.5rem); }
+h5 { font-size: clamp(1rem,    2.5vw, 1.25rem); }
+h6 { font-size: clamp(0.875rem, 2vw, 1.125rem); }
 
 p {
   color: var(--text-secondary);
@@ -120,6 +135,11 @@ button {
   background: none;
   border: none;
   cursor: pointer;
+  touch-action: manipulation; /* remove 300ms delay on mobile */
+}
+
+a {
+  touch-action: manipulation;
 }
 
 input[type="number"]::-webkit-inner-spin-button,
@@ -196,7 +216,17 @@ input[type="number"]::-webkit-outer-spin-button {
   width: 100%;
   max-width: 1120px;
   margin: 0 auto;
-  padding: 0 var(--space-6);
+  /* tighter side padding on small phones */
+  padding: 0 var(--space-4);
+  /* respect safe-area insets on notched phones */
+  padding-left: max(var(--space-4), env(safe-area-inset-left));
+  padding-right: max(var(--space-4), env(safe-area-inset-right));
+}
+
+@media (min-width: 640px) {
+  .page-shell {
+    padding: 0 var(--space-6);
+  }
 }
 
 @media (min-width: 768px) {

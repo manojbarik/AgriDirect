@@ -255,12 +255,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAiAssistant }) => {
         </nav>
 
         {/* Right Action Icons & Auth */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {/* AI Assistant Button */}
           {onOpenAiAssistant && (
             <button
               onClick={onOpenAiAssistant}
-              className="p-2 rounded-full bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-400/30 text-emerald-300 hover:text-white transition-all shadow-md shadow-emerald-950/30 flex items-center gap-1.5 px-3"
+              className="p-2 rounded-full bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-400/30 text-emerald-300 hover:text-white transition-all shadow-md shadow-emerald-950/30 flex items-center gap-1.5 px-2 sm:px-3"
               title="Open AgriDirect AI Assistant"
             >
               <Bot className="w-4 h-4 text-amber-300" />
@@ -269,7 +269,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAiAssistant }) => {
           )}
 
           {user ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <Link
                 to="/notifications"
                 className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white transition-colors relative"
@@ -278,9 +278,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAiAssistant }) => {
                 <Bell className="w-4 h-4" />
               </Link>
 
+              {/* Account pill — phone number hidden on mobile to save space */}
               <Link
                 to="/account"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-200 transition-colors"
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-200 transition-colors"
                 title="My Account"
               >
                 <User className="w-3.5 h-3.5 text-emerald-400" />
@@ -299,16 +300,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAiAssistant }) => {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Link
                 to="/login"
-                className="px-4 py-2 rounded-full text-xs font-bold text-slate-200 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs font-bold text-slate-200 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors whitespace-nowrap"
               >
                 Sign In
               </Link>
+              {/* 'Join AgriDirect' hidden on phones — appears in mobile menu instead */}
               <Link
                 to="/register"
-                className="px-4 py-2 rounded-full text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 via-amber-500 to-emerald-400 hover:brightness-110 shadow-lg shadow-amber-950/40 border border-amber-300/40 transition-all hover:scale-105"
+                className="hidden sm:block px-4 py-2 rounded-full text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 via-amber-500 to-emerald-400 hover:brightness-110 shadow-lg shadow-amber-950/40 border border-amber-300/40 transition-all hover:scale-105 whitespace-nowrap"
               >
                 Join AgriDirect
               </Link>
@@ -326,12 +328,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAiAssistant }) => {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+        {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden px-4 pt-3 pb-6 bg-[#07120c]/95 backdrop-blur-2xl border-b border-emerald-500/20 shadow-2xl space-y-2">
+        <div className="md:hidden px-4 pt-3 pb-6 bg-[#07120c]/95 backdrop-blur-2xl border-b border-emerald-500/20 shadow-2xl space-y-1">
           <Link
             to="/marketplace"
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-slate-200 hover:bg-white/5"
+            className="flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-semibold text-slate-200 hover:bg-white/5 active:bg-white/10"
           >
             <Store className="w-4 h-4 text-emerald-400" />
             <span>Marketplace</span>
@@ -339,7 +341,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAiAssistant }) => {
 
           <Link
             to="/marketplace/livestock"
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-slate-200 hover:bg-white/5"
+            className="flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-semibold text-slate-200 hover:bg-white/5 active:bg-white/10"
           >
             <span>🐾</span>
             <span>Livestock Market</span>
@@ -347,7 +349,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAiAssistant }) => {
 
           <Link
             to="/prices"
-            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-slate-200 hover:bg-white/5"
+            className="flex items-center gap-2 px-3 py-3 rounded-xl text-sm font-semibold text-slate-200 hover:bg-white/5 active:bg-white/10"
           >
             <TrendingUp className="w-4 h-4 text-emerald-400" />
             <span>Market Prices</span>
@@ -457,7 +459,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAiAssistant }) => {
             <Link to="/health" className="text-xs text-emerald-300/70 hover:text-emerald-300">
               API Status
             </Link>
-            {user && (
+            {user ? (
               <button
                 onClick={handleLogout}
                 className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 font-semibold"
@@ -465,6 +467,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAiAssistant }) => {
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Log Out</span>
               </button>
+            ) : (
+              <Link
+                to="/register"
+                className="text-xs font-bold px-3 py-1.5 rounded-full text-slate-950 bg-gradient-to-r from-amber-400 to-emerald-400"
+              >
+                Join AgriDirect
+              </Link>
             )}
           </div>
         </div>

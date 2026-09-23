@@ -12,6 +12,7 @@ function renderVerify() {
     <MemoryRouter initialEntries={['/verify']}>
       <AuthProvider>
         <Routes>
+          <Route path="/" element={<div>WEBSITE_HOME</div>} />
           <Route path="/verify" element={<VerifyPage />} />
           <Route path="/account" element={<div>ACCOUNT_PAGE</div>} />
           <Route path="/login" element={<div>LOGIN_PAGE</div>} />
@@ -59,43 +60,17 @@ describe('VerifyPage', () => {
     mock.restore()
   })
 
-  it('auto-fills the shared OTP state and submits with the mock code', async () => {
-    const user = userEvent.setup()
+  it('does not display mock OTP code and shows the back to website button', async () => {
     sessionStorage.clear()
-    vi.stubEnv('MODE', 'development')
     primeChallenge('654321')
-    const mock = createMock()
-    mock.onPost('/auth/otp/verify').reply(200, {
-      user_id: 'u1',
-      role: 'FARMER',
-      status: 'ACTIVE',
-      tokens: { access_token: 'a', refresh_token: 'r', token_type: 'bearer', expires_in: 600 },
-    })
-    mock.onGet('/auth/me').reply(200, {
-      id: 'u1',
-      phone_e164: '+919850012345',
-      email: 'farmer@example.com',
-      role: 'FARMER',
-      status: 'ACTIVE',
-      phone_verified_at: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-    })
 
     renderVerify()
-    await user.click(screen.getByRole('button', { name: /654321 \(Auto-Fill\)/i }))
+    expect(screen.queryByText(/654321/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Auto-Fill/i)).not.toBeInTheDocument()
 
-    const digits = Array.from({ length: 6 }, (_, i) => screen.getByLabelText(`Digit ${i + 1}`))
-    expect(digits.map((d) => (d as HTMLInputElement).value)).toEqual(['6', '5', '4', '3', '2', '1'])
-
-    await user.click(screen.getByRole('button', { name: /Verify & Access Account/i }))
-    await waitFor(() => {
-      expect(mock.history.post.length).toBe(1)
-    })
-    const payload = JSON.parse(mock.history.post[0].data)
-    expect(payload).toEqual({ challenge_id: 'ch1', code: '654321' })
-    expect(await screen.findByText('ACCOUNT_PAGE')).toBeInTheDocument()
-    mock.restore()
-    vi.unstubAllEnvs()
+    const backLink = screen.getByRole('link', { name: /Back to Website/i })
+    expect(backLink).toBeInTheDocument()
+    expect(backLink).toHaveAttribute('href', '/')
   })
 
   it('shows an inline error when verification fails', async () => {
