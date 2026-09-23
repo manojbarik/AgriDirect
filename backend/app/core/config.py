@@ -21,9 +21,7 @@ class Settings(BaseSettings):
     host: str = "127.0.0.1"
     port: int = 8000
 
-    database_url: str = (
-        "postgresql+psycopg://marketplace:marketplace@localhost:5432/farmer_buyer_marketplace"
-    )
+    database_url: str = "sqlite:///./marketplace_dev.db"
 
     jwt_secret_key: str = ""
     jwt_algorithm: str = "HS256"

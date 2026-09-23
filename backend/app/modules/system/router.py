@@ -40,3 +40,56 @@ def get_integrations() -> IntegrationStatus:
         telephony="configured" if settings.telephony_provider_key else "not_configured",
         database="configured" if settings.database_url else "not_configured",
     )
+
+
+@router.get(
+    "/db-status",
+    summary="Get database connectivity and table status (never returns passwords)",
+)
+def get_db_status(init_tables: bool = False) -> dict:
+    import urllib.parse
+    from app.db.base import Base
+    from app.db.session import engine
+    from sqlalchemy import inspect
+
+    settings = get_settings()
+    parsed = urllib.parse.urlparse(settings.database_url)
+    is_sqlite = "sqlite" in parsed.scheme
+
+    if is_sqlite:
+        safe_url = f"{parsed.scheme}://{parsed.path}"
+        host = "sqlite (local file)"
+    else:
+        safe_url = f"{parsed.scheme}://{parsed.username or ''}:***@{parsed.hostname}:{parsed.port}{parsed.path}"
+        host = parsed.hostname or "unknown"
+
+    if init_tables:
+        try:
+            Base.metadata.create_all(bind=engine)
+        except Exception:
+            pass
+
+    connected = False
+    table_count = 0
+    tables: list[str] = []
+    error: str | None = None
+
+    try:
+        inspector = inspect(engine)
+        tables = inspector.get_table_names()
+        table_count = len(tables)
+        connected = True
+    except Exception as exc:
+        error = str(exc)
+
+    return {
+        "connected": connected,
+        "database_url_safe": safe_url,
+        "host": host,
+        "is_localhost": host in ("localhost", "127.0.0.1"),
+        "table_count": table_count,
+        "tables_sample": tables[:10],
+        "error": error,
+        "ready": connected and table_count > 0,
+    }
+

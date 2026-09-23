@@ -23,14 +23,8 @@ _PROVIDER_MODES = (
     "delivery_provider_mode",
 )
 
-
-@asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    configure_logging()
-    settings = get_settings()
-    security.get_jwt_secret()
-
-    # Automatically run pending database migrations on startup
+def _ensure_database_ready(settings) -> None:
+    # 1. Try Alembic upgrade
     try:
         backend_dir = Path(__file__).resolve().parent.parent
         ini_path = backend_dir / "alembic.ini"
@@ -39,9 +33,58 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
             alembic_cfg.set_main_option("script_location", str(backend_dir / "migrations"))
             alembic_cfg.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
             command.upgrade(alembic_cfg, "head")
-            logger.info("Database migrations applied successfully")
+            logger.info("Database migrations applied successfully via Alembic")
     except Exception as exc:
-        logger.warning("Startup database migration check note: %s", exc)
+        logger.warning("Alembic upgrade note: %s; ensuring tables with Base.metadata.create_all", exc)
+
+    # 2. Guarantee all tables exist via SQLAlchemy metadata
+    try:
+        from app.db.base import Base
+        from app.db.session import engine
+
+        Base.metadata.create_all(bind=engine)
+        logger.info("Base metadata tables verified/created successfully")
+    except Exception as exc:
+        logger.error("Base metadata create_all error: %s", exc)
+
+    # 3. Seed initial crops if catalog is empty (non-test environments)
+    if settings.app_env != "test":
+        try:
+            from sqlalchemy import func, select
+            from app.db.models.marketplace import Crop
+            from app.db.session import SessionLocal
+
+            with SessionLocal() as db:
+                count = db.scalar(select(func.count(Crop.id)))
+                if count == 0:
+                    default_crops = [
+                        Crop(name="Tomato", variety="Hybrid", category="Vegetables", default_unit="kg"),
+                        Crop(name="Potato", variety="Jyoti", category="Vegetables", default_unit="kg"),
+                        Crop(name="Onion", variety="Red Nashik", category="Vegetables", default_unit="kg"),
+                        Crop(name="Wheat", variety="Sharbati", category="Grains", default_unit="quintal"),
+                        Crop(name="Rice", variety="Basmati 1121", category="Grains", default_unit="quintal"),
+                        Crop(name="Cotton", variety="Bt Cotton", category="Cash Crops", default_unit="quintal"),
+                        Crop(name="Soybean", variety="JS-335", category="Oilseeds", default_unit="quintal"),
+                        Crop(name="Maize", variety="Sweet Corn", category="Grains", default_unit="quintal"),
+                        Crop(name="Mango", variety="Alphonso", category="Fruits", default_unit="kg"),
+                        Crop(name="Banana", variety="Robusta", category="Fruits", default_unit="dozen"),
+                        Crop(name="Green Chilli", variety="G-4", category="Vegetables", default_unit="kg"),
+                        Crop(name="Mustard", variety="Pusa Bold", category="Oilseeds", default_unit="quintal"),
+                    ]
+                    db.add_all(default_crops)
+                    db.commit()
+                    logger.info("Initial crop catalog seeded (%d crops)", len(default_crops))
+        except Exception as exc:
+            logger.warning("Initial crop catalog seeding note: %s", exc)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    configure_logging()
+    settings = get_settings()
+    security.get_jwt_secret()
+
+    _ensure_database_ready(settings)
 
     if settings.app_env not in ("development", "test"):
         for name in _PROVIDER_MODES:
