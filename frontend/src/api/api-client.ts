@@ -23,7 +23,12 @@ function isAuthFlowUrl(url: string | undefined): boolean {
   return AUTH_FLOW_PREFIXES.some((prefix) => url.startsWith(prefix))
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/+$/, '')
+const envApiUrl = (import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/+$/, '')
+const apiBaseUrl =
+  envApiUrl ||
+  (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')
+    ? 'https://agridirect-backend-au87.onrender.com'
+    : '')
 
 export const apiClient = axios.create({
   baseURL: `${apiBaseUrl}/api/v1`,

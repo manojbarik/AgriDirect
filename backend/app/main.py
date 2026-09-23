@@ -1,7 +1,10 @@
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
+from alembic import command
+from alembic.config import Config
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -26,6 +29,20 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     configure_logging()
     settings = get_settings()
     security.get_jwt_secret()
+
+    # Automatically run pending database migrations on startup
+    try:
+        backend_dir = Path(__file__).resolve().parent.parent
+        ini_path = backend_dir / "alembic.ini"
+        if ini_path.exists():
+            alembic_cfg = Config(str(ini_path))
+            alembic_cfg.set_main_option("script_location", str(backend_dir / "migrations"))
+            alembic_cfg.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
+            command.upgrade(alembic_cfg, "head")
+            logger.info("Database migrations applied successfully")
+    except Exception as exc:
+        logger.warning("Startup database migration check note: %s", exc)
+
     if settings.app_env not in ("development", "test"):
         for name in _PROVIDER_MODES:
             if getattr(settings, name) == "mock":
@@ -48,6 +65,7 @@ def create_app() -> FastAPI:
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.backend_cors_origins,
+        allow_origin_regex=r"^https:\/\/.*\.onrender\.com$",
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["*"],
