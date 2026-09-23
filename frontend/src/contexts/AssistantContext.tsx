@@ -197,13 +197,13 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
     {
       id: 'welcome-1',
       sender: 'ai',
-      text: 'Namaste! I am AgriDirect AI — your intelligent marketplace operating partner. How can I assist you with your crops, market prices, or orders today?',
+      text: 'Namaste! I am Jarvis — the AgriDirect AI Intelligence Assistant, built by Manoj Barik. How can I assist you with your crops, market prices, weather advisories, or orders today?',
       timestamp: 'Just now',
       suggestions: [
-        "What is today's rice price?",
+        "What is today's paddy price?",
         'Find buyers for my harvest',
-        'Help me list produce',
         'Check weather advisory',
+        'Help me list produce',
       ],
     },
   ])
@@ -438,6 +438,7 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
       try {
         recognitionRef.current.stop()
       } catch {}
+      recognitionRef.current = null
     }
     setVoiceState('IDLE')
   }, [])
@@ -449,22 +450,28 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
       window.speechSynthesis.cancel()
       const utterance = new SpeechSynthesisUtterance(text)
       utterance.lang = voiceSettings.language
-      utterance.rate = 1.0
-      utterance.pitch = 1.05 // Warm female pitch adjustment
+      utterance.rate = 0.98
+      utterance.pitch = 1.02 // Calm, pleasant assistant tone
 
-      // Find female voice or Kore-sounding voice if available in browser
+      // Find natural or Indian language voice
       const voices = window.speechSynthesis.getVoices()
-      const femaleVoice = voices.find(
-        (v) =>
-          (v.lang.startsWith(voiceSettings.language.slice(0, 2)) || v.lang.includes('en')) &&
-          (v.name.toLowerCase().includes('female') ||
-            v.name.toLowerCase().includes('kore') ||
-            v.name.toLowerCase().includes('natural') ||
-            v.name.toLowerCase().includes('google') ||
-            v.name.toLowerCase().includes('samantha'))
-      )
-      if (femaleVoice) {
-        utterance.voice = femaleVoice
+      const langCode = voiceSettings.language.slice(0, 2).toLowerCase()
+      const preferredVoice =
+        voices.find(
+          (v) =>
+            v.lang.toLowerCase().startsWith(langCode) &&
+            (v.name.toLowerCase().includes('natural') ||
+              v.name.toLowerCase().includes('google') ||
+              v.name.toLowerCase().includes('female') ||
+              v.name.toLowerCase().includes('online'))
+        ) ||
+        voices.find((v) => v.lang.toLowerCase().startsWith(langCode)) ||
+        voices.find((v) => v.lang.toLowerCase().includes('in') || v.name.toLowerCase().includes('india')) ||
+        voices.find((v) => v.name.toLowerCase().includes('google') || v.name.toLowerCase().includes('natural')) ||
+        null
+
+      if (preferredVoice) {
+        utterance.voice = preferredVoice
       }
 
       utterance.onstart = () => {
@@ -493,7 +500,13 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     interruptVoice()
     setVoiceState('LISTENING')
-    setTranscript('Listening... Speak naturally in English, Hindi, or Odia.')
+    setTranscript(
+      voiceSettings.language.startsWith('or')
+        ? 'ଜାର୍ଭିସ ଶୁଣୁଛି... ଆପଣ ଓଡ଼ିଆରେ ପ୍ରଶ୍ନ କରନ୍ତୁ।'
+        : voiceSettings.language.startsWith('hi')
+        ? 'जार्विस सुन रहा है... आप हिंदी में पूछ सकते हैं।'
+        : 'Jarvis is listening... Speak naturally in English, Hindi, or Odia.'
+    )
 
     try {
       const recognition = new SpeechRecognitionClass()
@@ -532,6 +545,8 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
                   currentRoute: location.pathname,
                   location: (user as any)?.state || 'Odisha',
                   output_format: 'spoken_response',
+                  language: voiceSettings.language,
+                  user_language: voiceSettings.language.startsWith('or') ? 'odia' : voiceSettings.language.startsWith('hi') ? 'hindi' : 'english',
                 },
               })
 
@@ -578,7 +593,7 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
     } catch {
       setVoiceState('ERROR')
     }
-  }, [interruptVoice, voiceSettings.language, voiceState, userRole, location.pathname, user, handleActionDirective, speakText])
+  }, [interruptVoice, voiceSettings.language, voiceState, userRole, location.pathname, user, handleActionDirective, speakText, toast])
 
   const stopVoiceSession = useCallback(() => {
     interruptVoice()

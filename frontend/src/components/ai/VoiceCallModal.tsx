@@ -207,7 +207,33 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
         window.speechSynthesis.cancel()
         const utterance = new SpeechSynthesisUtterance(aiReply)
         utterance.lang = selectedLang
+        utterance.rate = 0.98
+        utterance.pitch = 1.02
+
+        const voices = window.speechSynthesis.getVoices()
+        const langCode = selectedLang.slice(0, 2).toLowerCase()
+        const preferredVoice =
+          voices.find(
+            (v) =>
+              v.lang.toLowerCase().startsWith(langCode) &&
+              (v.name.toLowerCase().includes('natural') ||
+                v.name.toLowerCase().includes('google') ||
+                v.name.toLowerCase().includes('female') ||
+                v.name.toLowerCase().includes('online'))
+          ) ||
+          voices.find((v) => v.lang.toLowerCase().startsWith(langCode)) ||
+          voices.find((v) => v.lang.toLowerCase().includes('in') || v.name.toLowerCase().includes('india')) ||
+          null
+
+        if (preferredVoice) {
+          utterance.voice = preferredVoice
+        }
+
         utterance.onend = () => {
+          setCallStatus('listening')
+          startListening()
+        }
+        utterance.onerror = () => {
           setCallStatus('listening')
           startListening()
         }
