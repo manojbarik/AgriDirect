@@ -90,6 +90,8 @@ export interface AssistantContextType {
   startVoiceSession: () => void
   stopVoiceSession: () => void
   interruptVoice: () => void
+  speakText: (text: string) => void
+  sendVoiceQuery: (query: string) => Promise<void>
   transcript: string
 
   // Confirmation Safety Workflow
@@ -443,12 +445,26 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
     setVoiceState('IDLE')
   }, [])
 
+  // Preload voices (critical for mobile where voices load asynchronously)
+  const cachedVoicesRef = useRef<SpeechSynthesisVoice[]>([])
+  useEffect(() => {
+    if (!('speechSynthesis' in window)) return
+    const loadVoices = () => {
+      cachedVoicesRef.current = window.speechSynthesis.getVoices()
+    }
+    loadVoices()
+    window.speechSynthesis.addEventListener('voiceschanged', loadVoices)
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices)
+  }, [])
+
   const speakText = useCallback(
     (text: string) => {
       if (!('speechSynthesis' in window)) return
 
       window.speechSynthesis.cancel()
-      const voices = window.speechSynthesis.getVoices()
+      const voices = cachedVoicesRef.current.length > 0
+        ? cachedVoicesRef.current
+        : window.speechSynthesis.getVoices()
       const langCode = voiceSettings.language.slice(0, 2).toLowerCase()
       const nativeVoice = voices.find((v) => v.lang.toLowerCase().startsWith(langCode))
 
@@ -488,7 +504,9 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
       const spokenText = voiceSettings.language.startsWith('or') && !nativeVoice ? toPhonetic(text) : text
       const utterance = new SpeechSynthesisUtterance(spokenText)
       utterance.lang = nativeVoice ? voiceSettings.language : (voiceSettings.language.startsWith('or') ? 'hi-IN' : voiceSettings.language)
-      utterance.rate = 0.96
+      // Slightly slower on mobile for clarity
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+      utterance.rate = isMobile ? 0.88 : 0.96
       utterance.pitch = 1.02
 
       const preferredVoice =
@@ -520,6 +538,19 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
 
       synthesisUtteranceRef.current = utterance
       window.speechSynthesis.speak(utterance)
+
+      // iOS Safari workaround: speech synthesis pauses after ~15s if we don't
+      // periodically call pause()/resume() to keep the audio session alive.
+      if (isMobile) {
+        const keepAlive = setInterval(() => {
+          if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.pause()
+            window.speechSynthesis.resume()
+          } else {
+            clearInterval(keepAlive)
+          }
+        }, 5000)
+      }
     },
     [voiceSettings.language]
   )
@@ -528,7 +559,12 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
     const SpeechRecognitionClass =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognitionClass) {
-      toast({ title: 'Speech recognition is not supported in this browser. Please use text chat.', type: 'warning' })
+      toast({
+        title: /iPhone|iPad|iPod/i.test(navigator.userAgent)
+          ? 'Voice input is not supported on iOS Safari. Please type your question in the text box below.'
+          : 'Speech recognition is not supported in this browser. Please use text chat.',
+        type: 'warning',
+      })
       return
     }
 
@@ -612,7 +648,13 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
         }
       }
 
-      recognition.onerror = () => {
+      recognition.onerror = (ev: any) => {
+        if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
+          toast({
+            title: '🔒 Microphone access denied. Allow microphone permission in your browser settings to use voice.',
+            type: 'warning',
+          })
+        }
         setVoiceState('IDLE')
       }
 
@@ -632,6 +674,75 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
   const stopVoiceSession = useCallback(() => {
     interruptVoice()
   }, [interruptVoice])
+
+  // Explicit voice query runner (supports both typing and quick chips for PC & Mobile)
+  const sendVoiceQuery = useCallback(
+    async (queryText: string) => {
+      const q = queryText.trim()
+      if (!q) return
+
+      interruptVoice()
+      setVoiceState('THINKING')
+      setTranscript(`You: "${q}"\n\nJarvis analyzing...`)
+
+      msgIdCounter += 1
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `voice-user-${msgIdCounter}`,
+          sender: 'user',
+          text: `🎙️ ${q}`,
+          timestamp: 'Just now',
+        },
+      ])
+      conversationHistoryRef.current.push({ role: 'user', text: q })
+
+      try {
+        const res = await assistantVoice({
+          message: q,
+          conversation_history: conversationHistoryRef.current.slice(-15),
+          context: {
+            role: userRole,
+            currentRoute: location.pathname,
+            location: (user as any)?.state || 'Odisha',
+            output_format: 'spoken_response',
+            language: voiceSettings.language,
+            user_language: voiceSettings.language.startsWith('or')
+              ? 'odia'
+              : voiceSettings.language.startsWith('hi')
+              ? 'hindi'
+              : 'english',
+          },
+        })
+
+        const reply = res.data.reply
+        conversationHistoryRef.current.push({ role: 'model', text: reply })
+
+        msgIdCounter += 1
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `voice-ai-${msgIdCounter}`,
+            sender: 'ai',
+            text: reply,
+            timestamp: 'Just now',
+            action: res.data.action,
+          },
+        ])
+
+        if (res.data.action) {
+          handleActionDirective(res.data.action)
+        }
+
+        setTranscript(reply)
+        speakText(reply)
+      } catch {
+        setVoiceState('ERROR')
+        setTranscript('Could not connect to voice backend.')
+      }
+    },
+    [interruptVoice, userRole, location.pathname, user, voiceSettings.language, handleActionDirective, speakText]
+  )
 
   // Context value object
   const value = useMemo<AssistantContextType>(
@@ -659,6 +770,8 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
       startVoiceSession,
       stopVoiceSession,
       interruptVoice,
+      speakText,
+      sendVoiceQuery,
       transcript,
       pendingConfirmation,
       confirmAction,
@@ -690,6 +803,8 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
       startVoiceSession,
       stopVoiceSession,
       interruptVoice,
+      speakText,
+      sendVoiceQuery,
       transcript,
       pendingConfirmation,
       confirmAction,
