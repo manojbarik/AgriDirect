@@ -24,18 +24,24 @@ function isAuthFlowUrl(url: string | undefined): boolean {
 }
 
 const envApiUrl = (import.meta.env.VITE_API_BASE_URL ?? '').trim().replace(/\/+$/, '')
+const isLocalhost =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    window.location.hostname === '0.0.0.0')
+
 const apiBaseUrl =
   envApiUrl ||
-  (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')
-    ? 'https://agridirect-backend-au87.onrender.com'
-    : '')
+  (isLocalhost
+    ? ''
+    : 'https://agridirect-backend-au87.onrender.com')
 
 export const apiClient = axios.create({
   baseURL: `${apiBaseUrl}/api/v1`,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 8000,
+  timeout: 45000,
 })
 
 apiClient.interceptors.request.use((config) => {
