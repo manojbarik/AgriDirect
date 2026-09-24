@@ -197,7 +197,7 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
     {
       id: 'welcome-1',
       sender: 'ai',
-      text: 'Namaste! I am Jarvis — the AgriDirect AI Intelligence Assistant, built by Manoj Barik. How can I assist you with your crops, market prices, weather advisories, or orders today?',
+      text: 'Namaste! I am Jarvis — the AgriDirect AI Intelligence Assistant, built by Abhinash. How can I assist you with your crops, market prices, weather advisories, or orders today?',
       timestamp: 'Just now',
       suggestions: [
         "What is today's paddy price?",
@@ -448,26 +448,60 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
       if (!('speechSynthesis' in window)) return
 
       window.speechSynthesis.cancel()
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = voiceSettings.language
-      utterance.rate = 0.98
-      utterance.pitch = 1.02 // Calm, pleasant assistant tone
-
-      // Find natural or Indian language voice
       const voices = window.speechSynthesis.getVoices()
       const langCode = voiceSettings.language.slice(0, 2).toLowerCase()
+      const nativeVoice = voices.find((v) => v.lang.toLowerCase().startsWith(langCode))
+
+      // Phonetic Odia fallback for browsers without native Odia voice pack installed
+      const toPhonetic = (t: string) => {
+        if (!/[\u0B00-\u0B7F]/.test(t)) return t
+        // Map longest first — prevents partial char 'ର' from matching inside longer words
+        const map: [string, string][] = [
+          ['ଆଗ୍ରୀଡାଇରେକ୍ଟ', 'AgriDirect'], ['ବିଶ୍ୱସନୀୟତା', 'biswasaniyata'],
+          ['ଅଭିନାଶଙ୍କ', 'Abhinash ka'], ['ସମ୍ପର୍କିତ', 'samparkita'],
+          ['ଉପସ୍ଥିତ', 'upasthita'], ['ନମସ୍କାର', 'Namaskar'],
+          ['କିଲୋଗ୍ରାମ', 'kilogram'], ['ନିୟନ୍ତ୍ରଣ', 'niyantrana'],
+          ['ଆନୁମାନିକ', 'anumanika'], ['ସିଞ୍ଚନ', 'sinchana'],
+          ['ନିର୍ମିତ', 'nirmita'], ['ପାଣିପାଗ', 'panipaga'],
+          ['ଆବହାୱା', 'abahawa'], ['ପରାମର୍ଶ', 'paramarsha'],
+          ['ଜାର୍ଭିସ', 'Jarvis'], ['ଦ୍ୱାରା', 'dwara'],
+          ['ସହାୟକ', 'sahayak'], ['ସମସ୍ତ', 'samasta'],
+          ['କରନ୍ତୁ', 'karantu'], ['ହୋଇଛି', 'hoichi'],
+          ['ଓଡ଼ିଶା', 'Odisha'], ['ବନ୍ଧୁ', 'bandhu'],
+          ['ଟମାଟୋ', 'tomato'], ['ଯାଞ୍ଚ', 'jancha'],
+          ['ଚାଷୀ', 'chashi'], ['ସେବା', 'seba'],
+          ['ମଣ୍ଡି', 'mandi'], ['ଧାନ', 'dhana'],
+          ['ଗହମ', 'gaham'], ['ଏବଂ', 'ebang'],
+          ['ଫସଲ', 'fasal'], ['ବଜାର', 'bajar'],
+          ['ଆଳୁ', 'alu'], ['ପିଆଜ', 'piaj'],
+          ['ପ୍ରତି', 'prati'], ['ପାଣି', 'pani'],
+          ['ପାଇଁ', 'paaeen'], ['ତେଲ', 'tel'],
+          ['ଦର', 'dara'], ['ମୁଁ', 'Mu'],
+          ['ଆଜି', 'Aji'], ['କୀଟ', 'kit'],
+        ]
+        let s = t
+        for (const [k, v] of map) { s = s.split(k).join(v) }
+        return s.replace(/[\u0B00-\u0B7F]+/g, '').replace(/\s{2,}/g, ' ').trim()
+      }
+
+
+      const spokenText = voiceSettings.language.startsWith('or') && !nativeVoice ? toPhonetic(text) : text
+      const utterance = new SpeechSynthesisUtterance(spokenText)
+      utterance.lang = nativeVoice ? voiceSettings.language : (voiceSettings.language.startsWith('or') ? 'hi-IN' : voiceSettings.language)
+      utterance.rate = 0.96
+      utterance.pitch = 1.02
+
       const preferredVoice =
+        nativeVoice ||
         voices.find(
           (v) =>
-            v.lang.toLowerCase().startsWith(langCode) &&
-            (v.name.toLowerCase().includes('natural') ||
-              v.name.toLowerCase().includes('google') ||
+            v.lang.toLowerCase().includes('in') &&
+            (v.name.toLowerCase().includes('google') ||
+              v.name.toLowerCase().includes('natural') ||
               v.name.toLowerCase().includes('female') ||
               v.name.toLowerCase().includes('online'))
         ) ||
-        voices.find((v) => v.lang.toLowerCase().startsWith(langCode)) ||
         voices.find((v) => v.lang.toLowerCase().includes('in') || v.name.toLowerCase().includes('india')) ||
-        voices.find((v) => v.name.toLowerCase().includes('google') || v.name.toLowerCase().includes('natural')) ||
         null
 
       if (preferredVoice) {

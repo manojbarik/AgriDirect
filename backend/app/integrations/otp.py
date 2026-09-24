@@ -163,7 +163,7 @@ class GmailOtpProvider(OtpProvider):
 class SmtpOtpProvider(OtpProvider):
     """Send OTP emails through SMTP using an App Password.
 
-    Works with any SMTP host that supports STARTTLS. For Gmail, generate an
+    Works with any SMTP host that supports STARTTLS or SSL. For Gmail, generate an
     app password at https://myaccount.google.com/apppasswords (requires
     2-Step Verification) and store it in SMTP_APP_PASSWORD.
     """
@@ -180,7 +180,7 @@ class SmtpOtpProvider(OtpProvider):
         self.port = port
         self.user = user
         self.app_password = app_password
-        self.sender_email = sender_email
+        self.sender_email = sender_email or user
 
     def generate_code(self, recipient: str) -> str:
         del recipient
@@ -206,25 +206,39 @@ class SmtpOtpProvider(OtpProvider):
             render_otp_email(code, ttl_minutes=get_settings().otp_ttl_minutes), "html"
         )
         message["to"] = recipient
-        message["from"] = self.sender_email
+        message["from"] = self.sender_email or self.user
         message["subject"] = "Your AgriDirect verification code"
         try:
-            with smtplib.SMTP(self.host, self.port, timeout=4) as server:
-                server.starttls()
+            if self.port == 465:
+                smtp_conn = smtplib.SMTP_SSL(self.host, self.port, timeout=15)
+            else:
+                smtp_conn = smtplib.SMTP(self.host, self.port, timeout=15)
+
+            with smtp_conn as server:
+                if self.port != 465:
+                    server.starttls()
                 server.login(self.user, self.app_password)
                 server.send_message(message)
             logger.info("SMTP OTP sent to %s (ref: smtp:%s)", recipient, recipient)
             return OtpDeliveryReceipt(provider_reference=f"smtp:{recipient}")
         except smtplib.SMTPAuthenticationError as exc:
+            logger.error("SMTP authentication failed for user %s: %s", self.user, exc)
             raise OtpDeliveryError(
-                "SMTP authentication failed. Check SMTP_USER and SMTP_APP_PASSWORD."
+                "SMTP authentication failed. Check SMTP_USER and SMTP_APP_PASSWORD (for Gmail, use an 16-character App Password, not main password)."
             ) from exc
         except (smtplib.SMTPException, OSError) as exc:
             logger.warning(
-                "SMTP delivery to %s failed (%s). Outbound SMTP may be blocked on this host. Falling back to direct OTP verification.",
+                "SMTP delivery to %s failed (%s). Host %s:%s connection issue.",
                 recipient,
                 exc,
+                self.host,
+                self.port,
             )
+            settings = get_settings()
+            if settings.app_env == "production" and settings.otp_provider_mode.lower() == "smtp":
+                raise OtpDeliveryError(
+                    f"Outbound SMTP email delivery failed ({exc}). Check SMTP host/port settings on Render."
+                ) from exc
             return OtpDeliveryReceipt(
                 provider_reference=f"smtp_fallback:{recipient}",
                 mock_code=code,
@@ -235,7 +249,10 @@ def get_otp_provider() -> OtpProvider:
     settings = get_settings()
     if settings.app_env == "test":
         return MockOtpProvider()
-    if settings.otp_provider_mode.lower() == "gmail":
+
+    mode = settings.otp_provider_mode.lower().strip()
+
+    if mode == "gmail":
         if not (
             settings.gmail_client_id
             and settings.gmail_client_secret
@@ -244,9 +261,7 @@ def get_otp_provider() -> OtpProvider:
         ):
             if settings.app_env == "development":
                 logger.warning(
-                    "Gmail API is not fully configured; falling back to the mock OTP "
-                    "provider. Run `python -m scripts.gmail_oauth_setup` to complete "
-                    "the Gmail setup and enable real email delivery."
+                    "Gmail API is not fully configured; falling back to the mock OTP provider."
                 )
                 return MockOtpProvider()
             raise RuntimeError(
@@ -259,24 +274,26 @@ def get_otp_provider() -> OtpProvider:
             refresh_token=settings.gmail_refresh_token or "",
             sender_email=settings.gmail_sender_email or "",
         )
-    if settings.otp_provider_mode.lower() == "smtp":
-        if not (
-            settings.smtp_host
-            and settings.smtp_user
-            and settings.smtp_app_password
-            and settings.smtp_sender_email
-        ):
-            logger.warning(
-                "SMTP is not fully configured (missing SMTP_USER, SMTP_APP_PASSWORD, "
-                "or SMTP_SENDER_EMAIL); falling back to mock OTP provider. "
-                "Set these environment variables in Render to enable real email delivery."
+
+    has_smtp_creds = bool(settings.smtp_host and settings.smtp_user and settings.smtp_app_password)
+
+    if mode == "smtp" or (mode in ("auto", "mock") and has_smtp_creds):
+        if not has_smtp_creds:
+            if settings.app_env == "development":
+                logger.warning(
+                    "SMTP is requested (OTP_PROVIDER_MODE=smtp) but SMTP_USER or SMTP_APP_PASSWORD is missing; falling back to mock OTP provider."
+                )
+                return MockOtpProvider()
+            raise RuntimeError(
+                "SMTP_USER and SMTP_APP_PASSWORD are required when OTP_PROVIDER_MODE=smtp."
             )
-            return MockOtpProvider()
+        sender_email = settings.smtp_sender_email or settings.smtp_user
         return SmtpOtpProvider(
             host=settings.smtp_host,
             port=settings.smtp_port,
             user=settings.smtp_user,
             app_password=settings.smtp_app_password,
-            sender_email=settings.smtp_sender_email,
+            sender_email=sender_email,
         )
+
     return MockOtpProvider()

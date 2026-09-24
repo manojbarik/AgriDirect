@@ -49,10 +49,14 @@ def check_smtp(settings) -> bool:
     try:
         import smtplib
 
-        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as srv:
-            srv.ehlo()
-            srv.starttls()
-            srv.login(settings.smtp_user, settings.smtp_app_password)
+        if settings.smtp_port == 465:
+            with smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port, timeout=15) as srv:
+                srv.login(settings.smtp_user, settings.smtp_app_password)
+        else:
+            with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as srv:
+                srv.ehlo()
+                srv.starttls()
+                srv.login(settings.smtp_user, settings.smtp_app_password)
         _status("SMTP", True, f"authenticated as {settings.smtp_user}")
         return True
     except Exception as e:

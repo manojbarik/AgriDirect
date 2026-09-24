@@ -54,7 +54,7 @@ export const AssistantChatTab: React.FC<{ onStartVoice?: () => void }> = ({ onSt
     {
       id: 'welcome',
       sender: 'ai',
-      text: 'ନମସ୍କାର! ମୁଁ ଜାର୍ଭିସ — AgriDirect AI, ମାନୋଜ ବାରିକଙ୍କ ଦ୍ୱାରା ନିର୍ମିତ। ଆପଣ Odia, Hindi, ବା English ରେ ପ୍ରଶ୍ନ କରନ୍ତୁ! 🌾\n\nNamaste! I am Jarvis, your AgriDirect AI built by Manoj Barik. Ask me about crops, market prices, weather, or schemes.',
+      text: 'ନମସ୍କାର! ମୁଁ ଜାର୍ଭିସ — AgriDirect AI, ଅଭିନାଶଙ୍କ ଦ୍ୱାରା ନିର୍ମିତ। ଆପଣ Odia, Hindi, ବା English ରେ ପ୍ରଶ୍ନ କରନ୍ତୁ! 🌾\n\nNamaste! I am Jarvis, your AgriDirect AI built by Abhinash. Ask me about crops, market prices, weather, or schemes.',
       timestamp: 'Just now',
       suggestions: ['ଆଜି ଧାନ ଦର କେତେ?', 'Wheat price Punjab', 'PM-KISAN details', 'Tomato blight cure'],
     },

@@ -24,6 +24,66 @@ const LANGUAGES = [
   { code: 'te-IN', label: 'Telugu (తెలుగు)' },
 ]
 
+function toPhoneticOdia(text: string): string {
+  if (!/[\u0B00-\u0B7F]/.test(text)) return text
+
+  // Map full Odia words/phrases to phonetic equivalents.
+  // IMPORTANT: list LONGEST strings first so partial chars like 'ର' don't
+  // accidentally match inside longer words (which caused "ra ra" artifacts).
+  const map: [string, string][] = [
+    ['ଆଗ୍ରୀଡାଇରେକ୍ଟ', 'AgriDirect'],
+    ['ବିଶ୍ୱସନୀୟତା', 'biswasaniyata'],
+    ['ଅଭିନାଶଙ୍କ', 'Abhinash ka'],
+    ['ସମ୍ପର୍କିତ', 'samparkita'],
+    ['ଉପସ୍ଥିତ', 'upasthita'],
+    ['ନମସ୍କାର', 'Namaskar'],
+    ['କିଲୋଗ୍ରାମ', 'kilogram'],
+    ['ନିୟନ୍ତ୍ରଣ', 'niyantrana'],
+    ['ଆନୁମାନିକ', 'anumanika'],
+    ['ସିଞ୍ଚନ', 'sinchana'],
+    ['ନିର୍ମିତ', 'nirmita'],
+    ['ପାଣିପାଗ', 'panipaga'],
+    ['ଆବହାୱା', 'abahawa'],
+    ['ପରାମର୍ଶ', 'paramarsha'],
+    ['ଜାର୍ଭିସ', 'Jarvis'],
+    ['ଦ୍ୱାରା', 'dwara'],
+    ['ସହାୟକ', 'sahayak'],
+    ['ସମସ୍ତ', 'samasta'],
+    ['କରନ୍ତୁ', 'karantu'],
+    ['ହୋଇଛି', 'hoichi'],
+    ['ଓଡ଼ିଶା', 'Odisha'],
+    ['ବନ୍ଧୁ', 'bandhu'],
+    ['ଟମାଟୋ', 'tomato'],
+    ['ଯାଞ୍ଚ', 'jancha'],
+    ['ଚାଷୀ', 'chashi'],
+    ['ସେବା', 'seba'],
+    ['ମଣ୍ଡି', 'mandi'],
+    ['ଧାନ', 'dhana'],
+    ['ଗହମ', 'gaham'],
+    ['ଏବଂ', 'ebang'],
+    ['ଫସଲ', 'fasal'],
+    ['ବଜାର', 'bajar'],
+    ['ଆଳୁ', 'alu'],
+    ['ପିଆଜ', 'piaj'],
+    ['ପ୍ରତି', 'prati'],
+    ['ପାଣି', 'pani'],
+    ['ପାଇଁ', 'paaeen'],
+    ['ତେଲ', 'tel'],
+    ['ଦର', 'dara'],
+    ['ମୁଁ', 'Mu'],
+    ['ଆଜି', 'Aji'],
+    ['କୀଟ', 'kit'],
+  ]
+
+  let str = text
+  for (const [k, v] of map) {
+    str = str.split(k).join(v)
+  }
+  // Strip any remaining unmapped Odia characters silently (no "ra" noise)
+  return str.replace(/[\u0B00-\u0B7F]+/g, '').replace(/\s{2,}/g, ' ').trim()
+}
+
+
 // SpeechRecognition type shim for browsers
 type SpeechRecognitionType = typeof window extends { SpeechRecognition: infer T } ? T : unknown
 
@@ -77,7 +137,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
           ? 'ନମସ୍କାର ଚାଷୀ ବନ୍ଧୁ! ମୁଁ ଜାର୍ଭିସ, ଆଗ୍ରୀଡାଇରେକ୍ଟ AI। ଆପଣ ଆପଣଙ୍କ ଫସଲ, ଦର, ଏବଂ ଆବହାୱା ବିଷୟରେ ପ୍ରଶ୍ନ କରନ୍ତୁ।'
           : selectedLang.startsWith('hi')
           ? 'नमस्ते किसान साथी! मैं जार्विस हूँ, AgriDirect AI असिस्टेंट। आप अपनी फसल, मंडी भाव या मौसम के बारे में पूछ सकते हैं।'
-          : 'Namaste farmer! I am Jarvis, your AgriDirect AI Assistant built by Manoj Barik. Ask me about your crops, mandi rates, or weather advisory today.'
+          : 'Namaste farmer! I am Jarvis, your AgriDirect AI Assistant built by Abhinash. Ask me about your crops, mandi rates, or weather advisory today.'
       setTranscript(welcomeText)
 
       // Speak the welcome using browser TTS with best available Indian voice
@@ -205,23 +265,27 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
     if ('speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel()
-        const utterance = new SpeechSynthesisUtterance(aiReply)
-        utterance.lang = selectedLang
-        utterance.rate = 0.98
-        utterance.pitch = 1.02
-
         const voices = window.speechSynthesis.getVoices()
         const langCode = selectedLang.slice(0, 2).toLowerCase()
+        const nativeVoice = voices.find((v) => v.lang.toLowerCase().startsWith(langCode))
+        
+        // If native Odia voice is not installed in OS/browser, convert to phonetic text for Indian voice
+        const spokenText = selectedLang.startsWith('or') && !nativeVoice ? toPhoneticOdia(aiReply) : aiReply
+        const utterance = new SpeechSynthesisUtterance(spokenText)
+        utterance.lang = nativeVoice ? selectedLang : (selectedLang.startsWith('or') ? 'hi-IN' : selectedLang)
+        utterance.rate = 0.96
+        utterance.pitch = 1.02
+
         const preferredVoice =
+          nativeVoice ||
           voices.find(
             (v) =>
-              v.lang.toLowerCase().startsWith(langCode) &&
-              (v.name.toLowerCase().includes('natural') ||
-                v.name.toLowerCase().includes('google') ||
+              v.lang.toLowerCase().includes('in') &&
+              (v.name.toLowerCase().includes('google') ||
+                v.name.toLowerCase().includes('natural') ||
                 v.name.toLowerCase().includes('female') ||
                 v.name.toLowerCase().includes('online'))
           ) ||
-          voices.find((v) => v.lang.toLowerCase().startsWith(langCode)) ||
           voices.find((v) => v.lang.toLowerCase().includes('in') || v.name.toLowerCase().includes('india')) ||
           null
 
