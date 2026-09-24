@@ -202,6 +202,33 @@ class SmtpOtpProvider(OtpProvider):
                 mock_code=code,
             )
 
+        # 1. If using Brevo API key, try the Brevo HTTPS REST API first (port 443, never blocked by host firewalls)
+        if self.app_password.startswith("xkeysib-"):
+            try:
+                brevo_url = "https://api.brevo.com/v3/smtp/email"
+                brevo_headers = {
+                    "accept": "application/json",
+                    "api-key": self.app_password,
+                    "content-type": "application/json",
+                }
+                brevo_payload = {
+                    "sender": {"name": "AgriDirect Support", "email": self.sender_email or self.user},
+                    "to": [{"email": recipient}],
+                    "subject": "Your AgriDirect verification code",
+                    "htmlContent": render_otp_email(code, ttl_minutes=get_settings().otp_ttl_minutes),
+                }
+                res = requests.post(brevo_url, headers=brevo_headers, json=brevo_payload, timeout=8)
+                if res.status_code in (200, 201, 202):
+                    msg_id = res.json().get("messageId", f"brevo:{recipient}")
+                    logger.info("Brevo REST API OTP sent successfully to %s (id: %s)", recipient, msg_id)
+                    return OtpDeliveryReceipt(provider_reference=msg_id)
+                elif res.status_code == 401 and "authorised_ips" in res.text:
+                    logger.warning("Brevo API requires IP Authorization. Check https://app.brevo.com/security/authorised_ips or disable IP restrictions in Brevo.")
+                else:
+                    logger.warning("Brevo API responded with status %d: %s", res.status_code, res.text)
+            except Exception as b_exc:
+                logger.warning("Brevo REST API attempt failed (%s); falling back to socket SMTP", b_exc)
+
         message = MIMEText(
             render_otp_email(code, ttl_minutes=get_settings().otp_ttl_minutes), "html"
         )
@@ -210,9 +237,9 @@ class SmtpOtpProvider(OtpProvider):
         message["subject"] = "Your AgriDirect verification code"
         try:
             if self.port == 465:
-                smtp_conn = smtplib.SMTP_SSL(self.host, self.port, timeout=15)
+                smtp_conn = smtplib.SMTP_SSL(self.host, self.port, timeout=10)
             else:
-                smtp_conn = smtplib.SMTP(self.host, self.port, timeout=15)
+                smtp_conn = smtplib.SMTP(self.host, self.port, timeout=10)
 
             with smtp_conn as server:
                 if self.port != 465:
@@ -224,7 +251,7 @@ class SmtpOtpProvider(OtpProvider):
         except smtplib.SMTPAuthenticationError as exc:
             logger.error("SMTP authentication failed for user %s: %s", self.user, exc)
             raise OtpDeliveryError(
-                "SMTP authentication failed. Check SMTP_USER and SMTP_APP_PASSWORD (for Gmail, use an 16-character App Password, not main password)."
+                "SMTP authentication failed. Check SMTP_USER and SMTP_APP_PASSWORD."
             ) from exc
         except (smtplib.SMTPException, OSError) as exc:
             logger.warning(
@@ -237,7 +264,7 @@ class SmtpOtpProvider(OtpProvider):
             settings = get_settings()
             if settings.app_env == "production" and settings.otp_provider_mode.lower() == "smtp":
                 raise OtpDeliveryError(
-                    f"Outbound SMTP email delivery failed ({exc}). Check SMTP host/port settings on Render."
+                    f"Outbound email delivery failed ({exc}). Check Brevo Authorized IPs or set OTP_PROVIDER_MODE=mock on Render."
                 ) from exc
             return OtpDeliveryReceipt(
                 provider_reference=f"smtp_fallback:{recipient}",
