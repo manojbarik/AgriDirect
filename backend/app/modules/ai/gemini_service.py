@@ -990,3 +990,67 @@ def chat(
             }
 
     return _synthesize_local_fallback(message, context)
+
+
+def chat_audio(
+    audio_bytes: bytes,
+    mime_type: str = "audio/webm",
+    context: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Process user voice audio recording with Gemini multimodal audio understanding."""
+    if _is_quota_blocked():
+        logger.info("Gemini API quota circuit breaker active. Routing audio query to fallback.")
+        return _synthesize_local_fallback("Farmer voice query", context)
+
+    client = _get_client()
+
+    audio_part = genai_types.Part.from_bytes(data=audio_bytes, mime_type=mime_type)
+    system_prompt = _SYSTEM_PROMPT
+    if context:
+        ctx_lines = ["\n\nACTIVE APPLICATION CONTEXT:"]
+        if context.get("role"):
+            ctx_lines.append(f"- User Role: {context['role']}")
+        if context.get("location"):
+            ctx_lines.append(f"- User Location: {context['location']}")
+        if context.get("language"):
+            ctx_lines.append(f"- Language Preference: {context['language']}")
+        ctx_lines.append("- Output Format: Spoken voice output. Keep reply concise, warm, spoken-word friendly (max 2-3 short sentences).")
+        system_prompt += "\n".join(ctx_lines)
+
+    tools = [genai_types.Tool(function_declarations=_TOOL_DECLARATIONS)]
+    config = genai_types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        tools=tools,
+        temperature=0.7,
+        max_output_tokens=512,
+    )
+
+    prompt_text = "Listen carefully to this user's voice message in their language (Odia, Hindi, English, Punjabi, etc.). Answer their question helpfully as Jarvis, the AgriDirect AI Assistant, in the exact same language they spoke. Keep response concise (2-3 short sentences) and spoken-word friendly."
+
+    contents = [
+        genai_types.Content(
+            role="user",
+            parts=[audio_part, genai_types.Part.from_text(text=prompt_text)],
+        )
+    ]
+
+    try:
+        response = _generate_with_fallback(
+            client=client,
+            contents=contents,
+            config=config,
+        )
+        if response.candidates and response.candidates[0].content:
+            parts = response.candidates[0].content.parts
+            text_parts = [p.text for p in parts if p.text]
+            if text_parts:
+                return {
+                    "reply": "\n".join(text_parts),
+                    "action": None,
+                    "suggested_actions": ["Check today's price", "Find buyers", "Weather advisory"],
+                }
+    except Exception as e:
+        logger.warning("Gemini audio generation error: %s", e)
+
+    return _synthesize_local_fallback("Crop market price and advice", context)
+

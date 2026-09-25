@@ -14,6 +14,7 @@ import { useCart } from './useCart'
 import {
   assistantChat,
   assistantVoice,
+  assistantAudio,
   type AssistantAction,
   type AssistantHistoryItem,
 } from '../api/ai'
@@ -431,6 +432,9 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
     toast({ title: 'Action cancelled safely.', type: 'info' })
   }, [toast])
 
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+
   // Voice Engine (TTS + STT + Interruption)
   const interruptVoice = useCallback(() => {
     if ('speechSynthesis' in window) {
@@ -441,6 +445,12 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
         recognitionRef.current.stop()
       } catch {}
       recognitionRef.current = null
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop()
+      } catch {}
+      mediaRecorderRef.current = null
     }
     setVoiceState('IDLE')
   }, [])
@@ -555,13 +565,102 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
     [voiceSettings.language]
   )
 
+  // Fallback MediaRecorder session for mobile APK / WebView and iOS Safari
+  const startMediaRecorderSession = useCallback(async () => {
+    interruptVoice()
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      toast({
+        title: 'Microphone access is not supported. Please use text chat.',
+        type: 'warning',
+      })
+      return
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType =
+        typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus'
+          : typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/mp4')
+          ? 'audio/mp4'
+          : 'audio/webm'
+
+      const mr = new MediaRecorder(stream, { mimeType })
+      mediaRecorderRef.current = mr
+      audioChunksRef.current = []
+
+      mr.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data)
+      }
+
+      mr.onstop = async () => {
+        stream.getTracks().forEach((track) => track.stop())
+        if (audioChunksRef.current.length > 0) {
+          const blob = new Blob(audioChunksRef.current, { type: mimeType })
+          setVoiceState('THINKING')
+          setTranscript('Jarvis analyzing voice recording...')
+          try {
+            const res = await assistantAudio(
+              blob,
+              voiceSettings.language,
+              userRole,
+              (user as any)?.state || 'Odisha'
+            )
+            const reply = res.data.reply
+            conversationHistoryRef.current.push({ role: 'user', text: '[Voice Message]' })
+            conversationHistoryRef.current.push({ role: 'model', text: reply })
+            msgIdCounter += 1
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `voice-ai-${msgIdCounter}`,
+                sender: 'ai',
+                text: reply,
+                timestamp: 'Just now',
+                action: res.data.action,
+              },
+            ])
+            if (res.data.action) handleActionDirective(res.data.action)
+            setTranscript(reply)
+            speakText(reply)
+          } catch {
+            setVoiceState('ERROR')
+            setTranscript('Could not connect to voice backend.')
+          }
+        } else {
+          setVoiceState('IDLE')
+        }
+      }
+
+      mr.start(250)
+      setVoiceState('LISTENING')
+      setTranscript(
+        voiceSettings.language.startsWith('or')
+          ? '🎙️ ଶୁଣୁଛି... କହି ସାରିଲେ ବଟନ୍ ଟ୍ୟାପ୍ କରନ୍ତୁ।'
+          : voiceSettings.language.startsWith('hi')
+          ? '🎙️ सुन रहा हूँ... बोलने के बाद बटन दबाएं।'
+          : '🎙️ Recording voice... Tap button when finished.'
+      )
+    } catch {
+      toast({
+        title: 'Microphone permission needed. Allow microphone in app settings.',
+        type: 'warning',
+      })
+      setVoiceState('IDLE')
+    }
+  }, [interruptVoice, voiceSettings.language, userRole, user, handleActionDirective, speakText, toast])
+
   const startVoiceSession = useCallback(() => {
     const SpeechRecognitionClass =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     if (!SpeechRecognitionClass) {
+      if (typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia) {
+        startMediaRecorderSession()
+        return
+      }
       toast({
         title: /iPhone|iPad|iPod/i.test(navigator.userAgent)
-          ? 'Voice input is not supported on iOS Safari. Please type your question in the text box below.'
+          ? 'Voice input is not supported on this browser. Please type your question in the text box below.'
           : 'Speech recognition is not supported in this browser. Please use text chat.',
         type: 'warning',
       })
@@ -649,7 +748,11 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
       }
 
       recognition.onerror = (ev: any) => {
-        if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
+        if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed' || ev.error === 'network') {
+          if (typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia) {
+            startMediaRecorderSession()
+            return
+          }
           toast({
             title: '🔒 Microphone access denied. Allow microphone permission in your browser settings to use voice.',
             type: 'warning',
@@ -667,9 +770,9 @@ export const AssistantProvider: React.FC<{ children: ReactNode }> = ({ children 
       recognition.start()
       recognitionRef.current = recognition
     } catch {
-      setVoiceState('ERROR')
+      startMediaRecorderSession()
     }
-  }, [interruptVoice, voiceSettings.language, voiceState, userRole, location.pathname, user, handleActionDirective, speakText, toast])
+  }, [interruptVoice, startMediaRecorderSession, voiceSettings.language, voiceState, userRole, location.pathname, user, handleActionDirective, speakText, toast])
 
   const stopVoiceSession = useCallback(() => {
     interruptVoice()

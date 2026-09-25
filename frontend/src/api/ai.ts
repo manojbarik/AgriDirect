@@ -260,6 +260,24 @@ export const assistantChat = (payload: AssistantChatPayload) =>
 export const assistantVoice = (payload: AssistantChatPayload) =>
   apiClient.post<AssistantChatResult>('/ai/assistant/voice', payload)
 
+export const assistantAudio = (
+  audioBlob: Blob,
+  language = 'en-IN',
+  role = 'FARMER',
+  location = 'Odisha'
+) => {
+  const formData = new FormData()
+  formData.append('file', audioBlob, 'voice_query.webm')
+  formData.append('language', language)
+  formData.append('role', role)
+  formData.append('location', location)
+  return apiClient.post<AssistantChatResult>('/ai/assistant/audio', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+}
+
 // ─────────────────────────────────────────────────────────────
 // System Integrations Status
 // ─────────────────────────────────────────────────────────────

@@ -10,7 +10,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import { Modal } from '../ui/Modal'
-import { assistantVoice, type AssistantHistoryItem } from '../../api/ai'
+import { assistantVoice, assistantAudio, type AssistantHistoryItem } from '../../api/ai'
 
 interface VoiceCallModalProps {
   isOpen: boolean
@@ -143,14 +143,17 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
   const [textInput, setTextInput] = useState('')
   const [sttSupported, setSttSupported] = useState(true)
   const [isSpeakerMuted, setIsSpeakerMuted] = useState(false)
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false)
   const isSpeakerMutedRef = useRef(false)
   isSpeakerMutedRef.current = isSpeakerMuted
   const conversationRef = useRef<AssistantHistoryItem[]>([])
   const recognitionRef = useRef<ReturnType<typeof Object.create> | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
   const voicesRef = useRef<SpeechSynthesisVoice[]>([])
   const isMobile = useRef(isMobileDevice())
 
-  // Cleanup speech synthesis and recognition on close
+  // Cleanup speech synthesis, recognition, and media recorder on close
   const cleanup = useCallback(() => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel()
@@ -163,6 +166,15 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
       }
       recognitionRef.current = null
     }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop()
+      } catch {
+        // ignore
+      }
+      mediaRecorderRef.current = null
+    }
+    setIsRecordingAudio(false)
   }, [])
 
   // Speak text using preloaded voices (mobile-safe)
@@ -227,72 +239,105 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
     [selectedLang]
   )
 
-  // Start listening using browser SpeechRecognition API
-  const startListening = useCallback(() => {
-    if (isMuted) return
-    const SRClass = getSpeechRecognition()
-    if (!SRClass) {
-      setSttSupported(false)
+  // Process audio blob recording from MediaRecorder
+  const handleAudioBlobQuery = useCallback(
+    async (blob: Blob) => {
+      setCallStatus('speaking')
+      setTranscript(
+        selectedLang.startsWith('or')
+          ? '⏳ ଜାର୍ଭିସ ଆପଣଙ୍କ ସ୍ୱର ଶୁଣୁଛି...'
+          : selectedLang.startsWith('hi')
+          ? '⏳ जार्विस आपकी आवाज़ सुन रहा है...'
+          : '⏳ Jarvis analyzing your voice message...'
+      )
+
+      try {
+        const response = await assistantAudio(blob, selectedLang, 'FARMER', 'Odisha')
+        const aiReply = response.data.reply
+        conversationRef.current.push({ role: 'user', text: '[Voice Query]' })
+        conversationRef.current.push({ role: 'model', text: aiReply })
+        setTranscript(`Jarvis: "${aiReply}"`)
+
+        speakTextMobile(aiReply, () => {
+          setCallStatus('listening')
+        })
+      } catch {
+        const errorMsg =
+          selectedLang.startsWith('or')
+            ? 'ମାଫ କରନ୍ତୁ, ଅଡିଓ ବୁଝିବାରେ ସମସ୍ୟା ହେଲା। ଦୟାକରି ତଳେ ଟାଇପ୍ କରନ୍ତୁ।'
+            : selectedLang.startsWith('hi')
+            ? 'माफ़ करें, आवाज़ समझने में समस्या हुई। कृपया नीचे टाइप करें।'
+            : 'Could not process voice recording. Please type your question below.'
+        setTranscript(errorMsg)
+        setCallStatus('listening')
+      }
+    },
+    [selectedLang, speakTextMobile]
+  )
+
+  // MediaRecorder audio capture for mobile APK, WebViews, and Safari
+  const startMediaRecording = useCallback(async () => {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      setTranscript('Microphone access is not supported. Please type your question below.')
       return
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const recognition = new (SRClass as any)()
-      recognition.lang = selectedLang
-      recognition.continuous = false
-      recognition.interimResults = true
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mimeType =
+        typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus'
+          : typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/mp4')
+          ? 'audio/mp4'
+          : 'audio/webm'
 
-      recognition.onresult = (event: { results: { transcript: string; isFinal: boolean }[][] }) => {
-        const result = event.results[event.results.length - 1]
-        if (result && result[0]) {
-          const spokenText = result[0].transcript
-          if (result[0].isFinal) {
-            handleVoiceQuery(spokenText)
-          } else {
-            setTranscript(`🎤 ${spokenText}...`)
-          }
+      const mr = new MediaRecorder(stream, { mimeType })
+      mediaRecorderRef.current = mr
+      audioChunksRef.current = []
+
+      mr.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunksRef.current.push(e.data)
         }
       }
 
-      recognition.onerror = (ev: { error: string }) => {
-        // On mobile and desktop, "not-allowed" means microphone permission denied
-        if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
-          setTranscript(
-            '🔒 Microphone access denied. You can type your question in the text bar below or allow microphone permission.'
-          )
+      mr.onstop = () => {
+        stream.getTracks().forEach((track) => track.stop())
+        if (audioChunksRef.current.length > 0) {
+          const blob = new Blob(audioChunksRef.current, { type: mimeType })
+          handleAudioBlobQuery(blob)
         }
-        setCallStatus('listening')
+        setIsRecordingAudio(false)
       }
 
-      recognition.onend = () => {
-        // Recognition completed
-      }
-
-      recognition.start()
-      recognitionRef.current = recognition
+      mr.start(250)
+      setIsRecordingAudio(true)
+      setCallStatus('listening')
+      setTranscript(
+        selectedLang.startsWith('or')
+          ? '🎙️ ଶୁଣୁଛି... କହି ସାରିଲେ ମାଇକ୍ ଟ୍ୟାପ୍ କରନ୍ତୁ।'
+          : selectedLang.startsWith('hi')
+          ? '🎙️ सुन रहा हूँ... बोलने के बाद माइक दबाएं।'
+          : '🎙️ Recording voice... Tap mic when finished speaking.'
+      )
     } catch {
-      setSttSupported(false)
+      setTranscript(
+        '🔒 Microphone permission needed. Please allow microphone in settings or type below.'
+      )
+      setCallStatus('listening')
     }
-  }, [selectedLang, isMuted]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedLang, handleAudioBlobQuery])
 
-  // Interrupt Jarvis speaking immediately
-  const handleInterrupt = useCallback(() => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
+  const stopMediaRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop()
+      } catch {}
     }
-    setCallStatus('listening')
-    setTranscript(
-      selectedLang.startsWith('or')
-        ? 'ଆପଣ କୁହନ୍ତୁ କିମ୍ବା ଟାଇପ୍ କରନ୍ତୁ, ଜାର୍ଭିସ ଶୁଣୁଛି...'
-        : selectedLang.startsWith('hi')
-        ? 'बोलिए या टाइप करें, जार्विस सुन रहा है...'
-        : 'Interrupted. Speak or type your question...'
-    )
-    if (sttSupported && !isMuted) {
-      startListening()
-    }
-  }, [selectedLang, sttSupported, isMuted, startListening])
+    setIsRecordingAudio(false)
+  }, [])
+
+  const startListeningRef = useRef<() => void>(() => {})
 
   // Send voice/text query to backend and speak response
   const handleVoiceQuery = useCallback(async (question: string) => {
@@ -335,8 +380,8 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
     // Speak the AI response, then go back to listening
     speakTextMobile(aiReply, () => {
       setCallStatus('listening')
-      if (sttSupported && !isMuted) {
-        startListening()
+      if (!isMuted) {
+        startListeningRef.current()
       } else {
         setTranscript(
           selectedLang.startsWith('or')
@@ -347,7 +392,79 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
         )
       }
     })
-  }, [selectedLang, isMuted, sttSupported, speakTextMobile, startListening])
+  }, [selectedLang, isMuted, speakTextMobile])
+
+  // Start listening using browser SpeechRecognition API, with MediaRecorder fallback
+  const startListening = useCallback(() => {
+    if (isMuted) return
+    const SRClass = getSpeechRecognition()
+    if (!SRClass) {
+      startMediaRecording()
+      return
+    }
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const recognition = new (SRClass as any)()
+      recognition.lang = selectedLang
+      recognition.continuous = false
+      recognition.interimResults = true
+
+      recognition.onresult = (event: { results: { transcript: string; isFinal: boolean }[][] }) => {
+        const result = event.results[event.results.length - 1]
+        if (result && result[0]) {
+          const spokenText = result[0].transcript
+          if (result[0].isFinal) {
+            handleVoiceQuery(spokenText)
+          } else {
+            setTranscript(`🎤 ${spokenText}...`)
+          }
+        }
+      }
+
+      recognition.onerror = (ev: { error: string }) => {
+        // In Android WebView, recognition fails with not-allowed or service-not-allowed
+        // Gracefully fall back to MediaRecorder!
+        if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed' || ev.error === 'network') {
+          startMediaRecording()
+        } else {
+          setCallStatus('listening')
+        }
+      }
+
+      recognition.onend = () => {
+        // Recognition cycle completed
+      }
+
+      recognition.start()
+      recognitionRef.current = recognition
+    } catch {
+      startMediaRecording()
+    }
+  }, [selectedLang, isMuted, startMediaRecording, handleVoiceQuery])
+
+  startListeningRef.current = startListening
+
+  // Interrupt Jarvis speaking immediately
+  const handleInterrupt = useCallback(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
+    if (isRecordingAudio) {
+      stopMediaRecording()
+    }
+    setCallStatus('listening')
+    setTranscript(
+      selectedLang.startsWith('or')
+        ? 'ଆପଣ କୁହନ୍ତୁ କିମ୍ବା ଟାଇପ୍ କରନ୍ତୁ, ଜାର୍ଭିସ ଶୁଣୁଛି...'
+        : selectedLang.startsWith('hi')
+        ? 'बोलिए या टाइप करें, जार्विस सुन रहा है...'
+        : 'Interrupted. Speak or type your question...'
+    )
+    if (!isMuted) {
+      startListening()
+    }
+  }, [selectedLang, isRecordingAudio, stopMediaRecording, isMuted, startListening])
 
   useEffect(() => {
     if (!isOpen) {
@@ -470,18 +587,30 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
           />
           <button
             type="button"
-            onClick={callStatus === 'speaking' ? handleInterrupt : (sttSupported && !isMuted ? startListening : undefined)}
+            onClick={() => {
+              if (callStatus === 'speaking') {
+                handleInterrupt()
+              } else if (isRecordingAudio) {
+                stopMediaRecording()
+              } else {
+                startListening()
+              }
+            }}
             className={`h-24 w-24 rounded-full flex items-center justify-center text-white shadow-2xl transition-all duration-500 z-10 cursor-pointer ${
               callStatus === 'speaking'
                 ? 'bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-emerald-500/50 hover:scale-105 active:scale-95'
+                : isRecordingAudio
+                ? 'bg-gradient-to-tr from-rose-500 to-red-600 shadow-rose-500/50 ring-4 ring-rose-400/40 animate-pulse'
                 : callStatus === 'listening'
                 ? 'bg-gradient-to-tr from-teal-600 to-emerald-600 shadow-teal-500/40 ring-4 ring-emerald-400/30'
                 : 'bg-slate-800'
             }`}
-            title={callStatus === 'speaking' ? 'Click to interrupt Jarvis' : 'Click to speak'}
+            title={callStatus === 'speaking' ? 'Click to interrupt Jarvis' : isRecordingAudio ? 'Click to send voice message' : 'Click to speak'}
           >
             {callStatus === 'speaking' ? (
               <Volume2 className="h-10 w-10 animate-bounce" />
+            ) : isRecordingAudio ? (
+              <Mic className="h-10 w-10 text-white animate-bounce" />
             ) : callStatus === 'listening' ? (
               <Mic className="h-10 w-10 animate-pulse" />
             ) : (
@@ -614,11 +743,13 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
 
         {/* Call control action buttons */}
         <div className="flex items-center justify-center gap-4 pt-1">
-          {/* Mute Mic Toggle */}
-          {sttSupported && (
-            <button
-              type="button"
-              onClick={() => {
+          {/* Mute/Record Mic Toggle */}
+          <button
+            type="button"
+            onClick={() => {
+              if (isRecordingAudio) {
+                stopMediaRecording()
+              } else {
                 const nextMuted = !isMuted
                 setIsMuted(nextMuted)
                 if (nextMuted && recognitionRef.current) {
@@ -627,17 +758,19 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({ isOpen, onClose 
                 } else if (!nextMuted && callStatus === 'listening') {
                   startListening()
                 }
-              }}
-              className={`p-3 rounded-full border transition-all active:scale-95 ${
-                isMuted
-                  ? 'bg-amber-950/60 border-amber-500/40 text-amber-400'
-                  : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700'
-              }`}
-              title={isMuted ? 'Unmute Microphone' : 'Mute Microphone'}
-            >
-              {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-            </button>
-          )}
+              }
+            }}
+            className={`p-3 rounded-full border transition-all active:scale-95 cursor-pointer ${
+              isRecordingAudio
+                ? 'bg-rose-950/70 border-rose-500 text-rose-300 animate-pulse'
+                : isMuted
+                ? 'bg-amber-950/60 border-amber-500/40 text-amber-400'
+                : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700'
+            }`}
+            title={isRecordingAudio ? 'Send voice message' : isMuted ? 'Unmute Microphone' : 'Mute Microphone'}
+          >
+            {isRecordingAudio ? <Mic className="h-5 w-5 animate-bounce text-rose-300" /> : isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+          </button>
 
           {/* Speaker Mute Toggle */}
           <button

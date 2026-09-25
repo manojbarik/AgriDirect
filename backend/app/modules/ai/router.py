@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.rate_limit import rate_limit
@@ -304,6 +304,55 @@ def assistant_voice(
     return AssistantChatResponse(
         reply=result.get("reply", ""),
         source="gemini_voice",
+        action=result.get("action"),
+        suggested_actions=result.get("suggested_actions"),
+    )
+
+
+@router.post(
+    "/assistant/audio",
+    response_model=AssistantChatResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Send recorded audio bytes from mobile devices or APK to the AI Assistant",
+)
+async def assistant_audio(
+    file: UploadFile = File(...),
+    language: str = Form("en-IN"),
+    role: str = Form("FARMER"),
+    location: str = Form("Odisha"),
+    _: None = Depends(ASSISTANT_LIMITER),
+) -> AssistantChatResponse:
+    from app.modules.ai import gemini_service
+
+    if not gemini_service.is_configured():
+        return AssistantChatResponse(
+            reply="Voice assistant is not configured. Please set GEMINI_API_KEY.",
+            source="error",
+        )
+
+    audio_bytes = await file.read()
+    mime = file.content_type or "audio/webm"
+    if not mime or mime == "application/octet-stream":
+        mime = "audio/webm"
+
+    context = {
+        "role": role,
+        "location": location,
+        "language": language,
+        "output_format": "spoken_response",
+    }
+
+    result = gemini_service.chat_audio(
+        audio_bytes=audio_bytes,
+        mime_type=mime,
+        context=context,
+    )
+    if isinstance(result, str):
+        return AssistantChatResponse(reply=result, source="gemini_audio")
+
+    return AssistantChatResponse(
+        reply=result.get("reply", ""),
+        source="gemini_audio",
         action=result.get("action"),
         suggested_actions=result.get("suggested_actions"),
     )
