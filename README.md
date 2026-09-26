@@ -1,4 +1,4 @@
-# 🌾 KRISHILINK AI — AgriDirect
+# 🌾 AGRIDIRECT AI — AgriDirect
 ### *Empowering Indian Agriculture through Multimodal AI, Transparent Price Discovery & Digital Trust*
 
 [![Smart India Hackathon 2026](https://img.shields.io/badge/SIH-2026-brightgreen?style=for-the-badge&logo=target)](https://sih.gov.in)
