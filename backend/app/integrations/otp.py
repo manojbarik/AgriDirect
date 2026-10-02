@@ -202,28 +202,31 @@ class SmtpOtpProvider(OtpProvider):
                 mock_code=code,
             )
 
-        # 1. If using Brevo API key, try the Brevo HTTPS REST API first (port 443, never blocked by host firewalls)
-        if self.app_password.startswith("xkeysib-"):
+        settings = get_settings()
+        # 1. If BREVO_API_KEY is set or the app password looks like a Brevo API key, try Brevo REST API
+        brevo_api_key = getattr(settings, "brevo_api_key", "") or self.app_password
+        if brevo_api_key.startswith("xkeysib-"):
             try:
+                import requests
+
                 brevo_url = "https://api.brevo.com/v3/smtp/email"
                 brevo_headers = {
                     "accept": "application/json",
-                    "api-key": self.app_password,
+                    "api-key": brevo_api_key,
                     "content-type": "application/json",
                 }
+                sender_email = getattr(settings, "brevo_sender_email", "") or self.sender_email or self.user
                 brevo_payload = {
-                    "sender": {"name": "AgriDirect Support", "email": self.sender_email or self.user},
+                    "sender": {"name": getattr(settings, "brevo_sender_name", "AgriDirect Support"), "email": sender_email},
                     "to": [{"email": recipient}],
                     "subject": "Your AgriDirect verification code",
-                    "htmlContent": render_otp_email(code, ttl_minutes=get_settings().otp_ttl_minutes),
+                    "htmlContent": render_otp_email(code, ttl_minutes=settings.otp_ttl_minutes),
                 }
                 res = requests.post(brevo_url, headers=brevo_headers, json=brevo_payload, timeout=8)
                 if res.status_code in (200, 201, 202):
                     msg_id = res.json().get("messageId", f"brevo:{recipient}")
                     logger.info("Brevo REST API OTP sent successfully to %s (id: %s)", recipient, msg_id)
                     return OtpDeliveryReceipt(provider_reference=msg_id)
-                elif res.status_code == 401 and "authorised_ips" in res.text:
-                    logger.warning("Brevo API requires IP Authorization. Check https://app.brevo.com/security/authorised_ips or disable IP restrictions in Brevo.")
                 else:
                     logger.warning("Brevo API responded with status %d: %s", res.status_code, res.text)
             except Exception as b_exc:

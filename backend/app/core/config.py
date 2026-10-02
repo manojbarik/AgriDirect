@@ -88,6 +88,16 @@ class Settings(BaseSettings):
     smtp_user: str = ""
     smtp_app_password: str = ""
     smtp_sender_email: str = ""
+    # Brevo (formerly Sendinblue)
+    brevo_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("BREVO_API_KEY", "BREVO_API_KEY_V3"),
+    )
+    brevo_sender_email: str = Field(
+        default="",
+        validation_alias=AliasChoices("BREVO_SENDER_EMAIL", "SENDER_EMAIL"),
+    )
+    brevo_sender_name: str = "AgriDirect Marketplace"
 
     otp_ttl_minutes: int = 3
     otp_resend_cooldown_seconds: int = 30
